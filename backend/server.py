@@ -25,6 +25,7 @@ from crypto_util import encrypt, decrypt, mask
 from rag import extract_text_from_file, chunk_text, retrieve_context
 from asset_tools import test_asset_connection, call_asset_endpoint, endpoint_to_tool_schema
 from llm_runner import run_chat
+from asset_templates import TEMPLATES, get_template
 
 
 # ---------------- Setup ----------------
@@ -300,6 +301,89 @@ async def test_asset(asset_id: str, request: Request):
         raise HTTPException(404, "Not found")
     result = await test_asset_connection(asset)
     return result
+
+
+# ---------------- Asset Templates (Marketplace) ----------------
+class InstantiateTemplateIn(BaseModel):
+    name: Optional[str] = None  # override asset display name (default = template name)
+    base_url: str
+    auth_config: AuthConfig
+
+
+@api.get("/asset-templates")
+async def list_templates():
+    # Strip nothing — public catalog, no secrets
+    return [
+        {
+            "id": t["id"],
+            "vendor": t["vendor"],
+            "name": t["name"],
+            "tagline": t["tagline"],
+            "description": t["description"],
+            "auth_type": t["auth_type"],
+            "auth_hint": t["auth_hint"],
+            "auth_defaults": t.get("auth_defaults", {}),
+            "base_url_example": t["base_url_example"],
+            "color": t.get("color", "#3B82F6"),
+            "endpoint_count": len(t["endpoints"]),
+            "endpoints": [
+                {"name": e["name"], "method": e["method"], "path": e["path"],
+                 "description": e.get("description", "")}
+                for e in t["endpoints"]
+            ],
+        }
+        for t in TEMPLATES
+    ]
+
+
+@api.post("/asset-templates/{template_id}/instantiate")
+async def instantiate_template(template_id: str, payload: InstantiateTemplateIn, request: Request):
+    user = await current_user(request)
+    tpl = get_template(template_id)
+    if not tpl:
+        raise HTTPException(404, "Template not found")
+
+    # Merge template auth defaults with user-supplied auth_config
+    # Use exclude_unset so Pydantic model defaults don't override template defaults
+    merged_cfg = dict(tpl.get("auth_defaults") or {})
+    user_cfg = payload.auth_config.model_dump(exclude_unset=True, exclude_none=True)
+    merged_cfg.update(user_cfg)
+
+    asset_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "name": payload.name or tpl["name"],
+        "vendor": tpl["vendor"],
+        "description": tpl["description"],
+        "base_url": payload.base_url.rstrip("/"),
+        "auth_type": tpl["auth_type"],
+        "auth_config": _encrypt_auth_config(merged_cfg),
+        "created_at": now_iso(),
+        "from_template": template_id,
+    }
+    await db.assets.insert_one(asset_doc)
+
+    # Bulk-create endpoints
+    ep_docs = []
+    for ep in tpl["endpoints"]:
+        ep_docs.append({
+            "id": str(uuid.uuid4()),
+            "asset_id": asset_doc["id"],
+            "user_id": user["id"],
+            "name": ep["name"],
+            "description": ep.get("description", ""),
+            "method": ep["method"].upper(),
+            "path": ep["path"],
+            "query_params": ep.get("query_params", []),
+            "created_at": now_iso(),
+        })
+    if ep_docs:
+        await db.asset_endpoints.insert_many(ep_docs)
+
+    return {
+        "asset": _sanitize_asset_out(asset_doc),
+        "endpoints_created": len(ep_docs),
+    }
 
 
 # ---------------- Asset Endpoints ----------------
