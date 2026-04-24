@@ -75,6 +75,15 @@ html { color-scheme: dark; }
 .method-PATCH  { @apply bg-violet-500/10 text-violet-400 border border-violet-500/30; }
 .method-DELETE { @apply bg-red-500/10 text-red-400 border border-red-500/30; }
 
+/* Flow node type accents (matched to their icon color) */
+.node-trigger { @apply border-l-2 border-l-emerald-500/60; }
+.node-action  { @apply border-l-2 border-l-blue-500/60; }
+.node-logic   { @apply border-l-2 border-l-amber-500/60; }
+
+.node-pill-trigger { @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/30; }
+.node-pill-action  { @apply bg-blue-500/10 text-blue-400 border border-blue-500/30; }
+.node-pill-logic   { @apply bg-amber-500/10 text-amber-400 border border-amber-500/30; }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: hsl(var(--background)); }

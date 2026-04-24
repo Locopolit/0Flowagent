@@ -26,7 +26,11 @@ from rag import extract_text_from_file, chunk_text, retrieve_context
 from asset_tools import test_asset_connection, call_asset_endpoint, endpoint_to_tool_schema
 from llm_runner import run_chat
 from asset_templates import TEMPLATES, get_template
+from flow_executor import execute_flow
 
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 # ---------------- Setup ----------------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s | %(message)s")
@@ -35,6 +39,8 @@ logger = logging.getLogger("agentforge")
 mongo_url = os.environ["MONGO_URL"]
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ["DB_NAME"]]
+
+scheduler = AsyncIOScheduler()
 
 app = FastAPI(title="AgentForge API")
 api = APIRouter(prefix="/api")
@@ -66,6 +72,30 @@ class RegisterIn(BaseModel):
 class LoginIn(BaseModel):
     email: EmailStr
     password: str
+
+
+# ---------------- Flow Models ----------------
+class Node(BaseModel):
+    id: str
+    type: str  # trigger | action | logic
+    subtype: str  # webhook | cron | llm | tool | if_else
+    config: Dict[str, Any] = {}
+    position: Optional[Dict[str, float]] = None
+
+
+class Edge(BaseModel):
+    id: str
+    source: str
+    target: str
+    sourceHandle: Optional[str] = None
+    targetHandle: Optional[str] = None
+
+
+class FlowIn(BaseModel):
+    name: str
+    description: Optional[str] = ""
+    nodes: List[Node] = []
+    edges: List[Edge] = []
 
 
 # ---------------- Auth Routes ----------------
@@ -742,6 +772,145 @@ async def chat(conv_id: str, payload: ChatIn, request: Request):
     return {"assistant": strip_private(asst_msg)}
 
 
+# ---------------- Flows ----------------
+@api.get("/flows")
+async def list_flows(request: Request):
+    user = await current_user(request)
+    cursor = db.flows.find({"user_id": user["id"]}).sort("created_at", -1)
+    return [strip_private(f) for f in await cursor.to_list(length=100)]
+
+
+@api.post("/flows")
+async def create_flow(payload: FlowIn, request: Request):
+    user = await current_user(request)
+    flow_id = str(uuid.uuid4())
+    doc = {
+        "id": flow_id,
+        "user_id": user["id"],
+        "name": payload.name,
+        "description": payload.description,
+        "nodes": [n.model_dump() for n in payload.nodes],
+        "edges": [e.model_dump() for e in payload.edges],
+        "created_at": now_iso(),
+        "updated_at": now_iso(),
+    }
+    await db.flows.insert_one(doc)
+    _schedule_flow_crons(doc)
+    return strip_private(doc)
+
+
+@api.get("/flows/{flow_id}")
+async def get_flow(flow_id: str, request: Request):
+    user = await current_user(request)
+    flow = await db.flows.find_one({"id": flow_id, "user_id": user["id"]})
+    if not flow:
+        raise HTTPException(status_code=404, detail="Flow not found")
+    return strip_private(flow)
+
+
+@api.put("/flows/{flow_id}")
+async def update_flow(flow_id: str, payload: FlowIn, request: Request):
+    user = await current_user(request)
+    flow = await db.flows.find_one({"id": flow_id, "user_id": user["id"]})
+    if not flow:
+        raise HTTPException(status_code=404, detail="Flow not found")
+    update = {
+        "name": payload.name,
+        "description": payload.description,
+        "nodes": [n.model_dump() for n in payload.nodes],
+        "edges": [e.model_dump() for e in payload.edges],
+        "updated_at": now_iso(),
+    }
+    await db.flows.update_one({"id": flow_id}, {"$set": update})
+    updated = await db.flows.find_one({"id": flow_id, "user_id": user["id"]}, {"_id": 0})
+    if updated:
+        _unschedule_flow_crons(flow_id)
+        _schedule_flow_crons(updated)
+    return {"status": "ok"}
+
+
+@api.delete("/flows/{flow_id}")
+async def delete_flow(flow_id: str, request: Request):
+    user = await current_user(request)
+    await db.flows.delete_one({"id": flow_id, "user_id": user["id"]})
+    _unschedule_flow_crons(flow_id)
+    return {"status": "ok"}
+
+
+class FlowExecuteIn(BaseModel):
+    input: Optional[Any] = None
+
+
+@api.post("/flows/{flow_id}/execute")
+async def execute_flow_manual(flow_id: str, request: Request, payload: Optional[FlowExecuteIn] = None):
+    user = await current_user(request)
+    flow = await db.flows.find_one({"id": flow_id, "user_id": user["id"]}, {"_id": 0})
+    if not flow:
+        raise HTTPException(status_code=404, detail="Flow not found")
+    input_data = payload.input if payload else None
+    result = await execute_flow(flow, input_data=input_data, db=db, user_id=user["id"])
+    return {"status": "ok", "result": result}
+
+
+# ---------------- Webhooks ----------------
+@app.post("/api/webhooks/{webhook_id}")
+async def public_webhook(webhook_id: str, request: Request):
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = (await request.body()).decode("utf-8", errors="ignore")
+    # Find flow that has a Webhook trigger node with this ID
+    flow = await db.flows.find_one(
+        {"nodes": {"$elemMatch": {"subtype": "webhook", "config.webhook_id": webhook_id}}},
+        {"_id": 0},
+    )
+    if not flow:
+        return JSONResponse(status_code=404, content={"error": "Webhook not found"})
+    result = await execute_flow(flow, input_data=payload, db=db, user_id=flow.get("user_id"))
+    return {"status": "received", "result": result}
+
+
+# ---------------- Cron scheduling helpers ----------------
+def _schedule_flow_crons(flow: Dict) -> None:
+    """Register APScheduler jobs for every cron trigger in the flow."""
+    flow_id = flow.get("id")
+    if not flow_id:
+        return
+    for node in flow.get("nodes", []):
+        if node.get("type") != "trigger" or node.get("subtype") != "cron":
+            continue
+        cron_expr = (node.get("config") or {}).get("cron")
+        if not cron_expr:
+            continue
+        job_id = f"flow:{flow_id}:{node['id']}"
+        try:
+            trigger = CronTrigger.from_crontab(cron_expr)
+        except Exception as e:  # noqa: BLE001
+            logger.warning("Invalid cron '%s' on flow %s: %s", cron_expr, flow_id, e)
+            continue
+        scheduler.add_job(
+            _run_cron_flow, trigger=trigger, id=job_id,
+            args=[flow_id], replace_existing=True, misfire_grace_time=30,
+        )
+        logger.info("Scheduled cron job %s (%s)", job_id, cron_expr)
+
+
+def _unschedule_flow_crons(flow_id: str) -> None:
+    for job in list(scheduler.get_jobs()):
+        if job.id.startswith(f"flow:{flow_id}:"):
+            scheduler.remove_job(job.id)
+
+
+async def _run_cron_flow(flow_id: str) -> None:
+    flow = await db.flows.find_one({"id": flow_id}, {"_id": 0})
+    if not flow:
+        return
+    try:
+        await execute_flow(flow, input_data=None, db=db, user_id=flow.get("user_id"))
+    except Exception:  # noqa: BLE001
+        logger.exception("Cron execution failed for flow %s", flow_id)
+
+
 # ---------------- Stats ----------------
 @api.get("/stats")
 async def stats(request: Request):
@@ -781,9 +950,15 @@ async def on_startup():
     await db.asset_endpoints.create_index([("asset_id", 1)])
     await db.workspaces.create_index([("user_id", 1)])
     await db.messages.create_index([("conversation_id", 1), ("created_at", 1)])
-    logger.info("Indexes ensured")
+    await db.flows.create_index([("user_id", 1)])
+    scheduler.start()
+    # Re-hydrate cron jobs for existing flows
+    async for flow in db.flows.find({}, {"_id": 0}):
+        _schedule_flow_crons(flow)
+    logger.info("Indexes ensured and scheduler started")
 
 
 @app.on_event("shutdown")
 async def on_shutdown():
+    scheduler.shutdown()
     client.close()

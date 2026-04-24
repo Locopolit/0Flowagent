@@ -9,6 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Database, Trash, Plugs, Sparkle } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import PageHeader from "@/components/PageHeader";
+import EmptyState from "@/components/EmptyState";
+import Loading from "@/components/Loading";
 
 const emptyForm = {
   name: "",
@@ -58,22 +61,21 @@ export default function AssetsList() {
 
   return (
     <div className="p-8 max-w-[1280px] mx-auto" data-testid="assets-page">
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <p className="mono-label">// assets</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-tight">Registered vendors</h1>
-          <p className="mt-2 text-sm text-muted-foreground">External APIs that agents can invoke as tools.</p>
-        </div>
-        <div className="flex gap-2">
-          <Link to="/assets/templates" data-testid="browse-templates-button">
-            <Button variant="outline" className="rounded-sm gap-2">
-              <Sparkle size={14} weight="duotone" /> Browse templates
-            </Button>
-          </Link>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="rounded-sm gap-2" data-testid="new-asset-button"><Plus size={14} /> Register asset</Button>
-            </DialogTrigger>
+      <PageHeader
+        label="assets"
+        title="Registered vendors"
+        description="External APIs that agents can invoke as tools."
+        action={
+          <>
+            <Link to="/assets/templates" data-testid="browse-templates-button">
+              <Button variant="outline" className="rounded-sm gap-2">
+                <Sparkle size={14} weight="duotone" /> Browse templates
+              </Button>
+            </Link>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button className="rounded-sm gap-2" data-testid="new-asset-button"><Plus size={14} /> Register asset</Button>
+              </DialogTrigger>
           <DialogContent className="max-w-2xl bg-card border-border">
             <DialogHeader><DialogTitle>Register an asset</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4">
@@ -154,18 +156,25 @@ export default function AssetsList() {
                 {saving ? "Saving..." : "Register asset"}
               </Button>
             </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        </div>
-      </div>
+            </DialogContent>
+            </Dialog>
+          </>
+        }
+      />
 
       {loading ? (
-        <div className="font-mono text-sm text-muted-foreground">[ loading assets... ]</div>
+        <Loading label="loading assets" />
       ) : items.length === 0 ? (
-        <div className="border border-dashed border-border p-16 text-center">
-          <Database size={28} className="mx-auto text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground">No assets registered yet. Add your first vendor above.</p>
-        </div>
+        <EmptyState
+          icon={Database}
+          title="No assets registered"
+          description="Add your first vendor API so agents and flows can call it as a tool."
+          action={
+            <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
+              <Plus size={14} /> Register asset
+            </Button>
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((a) => (
