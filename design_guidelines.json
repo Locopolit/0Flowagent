@@ -1,0 +1,105 @@
+{
+  "theme": "dark",
+  "archetype": "4 (Swiss & High-Contrast)",
+  "typography": {
+    "fonts": {
+      "heading": "IBM Plex Sans",
+      "body": "IBM Plex Sans",
+      "mono": "JetBrains Mono"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl font-semibold tracking-tight",
+      "h2": "text-2xl sm:text-3xl font-semibold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-medium",
+      "h4": "text-lg font-medium",
+      "body": "text-sm text-neutral-300 leading-relaxed",
+      "mono_label": "text-xs font-mono tracking-widest uppercase text-neutral-500",
+      "code": "text-xs sm:text-sm font-mono"
+    }
+  },
+  "colors": {
+    "background": "#0a0a0a",
+    "surface": "#121212",
+    "surface_hover": "#1a1a1a",
+    "border": "#262626",
+    "text_primary": "#fafafa",
+    "text_secondary": "#a3a3a3",
+    "primary": "#3B82F6",
+    "primary_hover": "#60A5FA",
+    "primary_foreground": "#ffffff",
+    "status": {
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444",
+      "info": "#3B82F6"
+    },
+    "css_variables": {
+      "--background": "0 0% 4%",
+      "--foreground": "0 0% 98%",
+      "--card": "0 0% 7%",
+      "--card-foreground": "0 0% 98%",
+      "--popover": "0 0% 7%",
+      "--popover-foreground": "0 0% 98%",
+      "--primary": "217 91% 60%",
+      "--primary-foreground": "0 0% 100%",
+      "--secondary": "0 0% 12%",
+      "--secondary-foreground": "0 0% 98%",
+      "--muted": "0 0% 12%",
+      "--muted-foreground": "0 0% 64%",
+      "--accent": "0 0% 15%",
+      "--accent-foreground": "0 0% 98%",
+      "--destructive": "0 84% 60%",
+      "--destructive-foreground": "0 0% 98%",
+      "--border": "0 0% 15%",
+      "--input": "0 0% 15%",
+      "--ring": "217 91% 60%",
+      "--radius": "0.25rem"
+    }
+  },
+  "layout": {
+    "strategy": "Control Room Grid",
+    "sidebar": "Left-aligned, 240px to 280px width, deep background (--background), 1px right border (--border).",
+    "content_area": "Maximum height utilization (h-screen), dense grid padding (p-6 or p-8), strictly aligned internal grid items.",
+    "spacing_scale": "Standard Tailwind + generous padding inside cards (p-4 to p-6)",
+    "surfaces": "Grid Borders strategy. Flat cards with 1px border. No shadows. Extreme high contrast."
+  },
+  "components": {
+    "buttons": "Square or minimal radius (rounded-sm). Primary: Solid Cobalt Blue. Secondary: Transparent with 1px gray border. Hover states must increase background lightness slightly.",
+    "cards": "Flat background (--card), 1px border (--border). No shadow. Internal padding p-6. Hover effect: slight border brighten to neutral-600.",
+    "inputs": "Flat, 1px border. Background neutral-900. Focus state: ring-1 ring-primary border-primary.",
+    "tables": "Dense. Header rows with mono_label typography. 1px bottom borders for rows. Zebra striping optional but hover states mandatory on rows.",
+    "chat_bubbles": {
+      "user": "Right-aligned, max-w-[80%], bg-neutral-900 border border-border rounded-lg p-4. Text left-aligned.",
+      "agent": "Left-aligned, max-w-[80%], bg-transparent rounded-lg p-4. Text left-aligned. Markdown support inside."
+    },
+    "tool_call_traces": "LangSmith style. Collapsible vertical timeline. Left border indicates status (Green/Red). Header contains GET/POST in monospace tag (e.g. bg-blue-500/10 text-blue-400 text-xs px-2 py-1). Nested JSON viewer inside using JetBrains Mono with syntax coloring (keys in white, strings in green, numbers in amber)."
+  },
+  "media": {
+    "login_background": {
+      "url": "https://images.pexels.com/photos/4508751/pexels-photo-4508751.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Steel framework cabinets housing servers networking devices and cables in contemporary equipped data center",
+      "usage": "Use as a full-page cinematic background for the Auth/Login screen with a heavy black overlay (bg-black/80)."
+    },
+    "dashboard_splash": {
+      "url": "https://images.unsplash.com/photo-1744868562210-fffb7fa882d9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTV8MHwxfHNlYXJjaHwxfHxkYXJrJTIwc2VydmVyJTIwcm9vbSUyMGRhdGElMjBjZW50ZXJ8ZW58MHx8fHwxNzc3MDIwOTU5fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Yellow and green cables neatly connected in a dark environment",
+      "usage": "Can be used as a subtle texture in empty states or welcome banners."
+    }
+  },
+  "micro_interactions": {
+    "hover": "Subtle border color shifts (e.g., border-neutral-800 to border-neutral-600).",
+    "active": "Slight scale down (scale-95) for buttons.",
+    "loading": "ASCII or Monospace text loader (e.g., [ ===    ] 40%) instead of generic spinners for a technical vibe."
+  },
+  "accessibility": {
+    "data_testid": "Mandatory on all interactive elements (buttons, inputs, links, list items)."
+  },
+  "instructions_to_main_agent": [
+    "Install specific fonts via Google Fonts: IBM Plex Sans (Weights: 400, 500, 600) and JetBrains Mono (Weights: 400, 500).",
+    "Use Phosphor Icons (@phosphor-icons/react) for sharp, technical iconography.",
+    "Configure Tailwind with the provided CSS variables.",
+    "Do NOT use arbitrary card shadows; stick to the flat 'Grid Borders' approach (1px border).",
+    "For the tool execution traces, build a recursive collapsible tree component using JetBrains Mono.",
+    "Ensure 'data-testid' is added strictly as requested."
+  ]
+}
