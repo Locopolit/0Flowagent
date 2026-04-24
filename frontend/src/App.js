@@ -11,6 +11,8 @@ import LLMConfigs from "@/pages/LLMConfigs";
 import WorkspacesList from "@/pages/WorkspacesList";
 import WorkspaceDetail from "@/pages/WorkspaceDetail";
 import Templates from "@/pages/Templates";
+import FlowsList from "@/pages/FlowsList";
+import FlowEditor from "@/pages/FlowEditor";
 import "@/App.css";
 
 function Protected({ children }) {
@@ -50,6 +52,8 @@ export default function App() {
           <Route path="llm" element={<LLMConfigs />} />
           <Route path="workspaces" element={<WorkspacesList />} />
           <Route path="workspaces/:id" element={<WorkspaceDetail />} />
+          <Route path="flows" element={<FlowsList />} />
+          <Route path="flows/:id" element={<FlowEditor />} />
         </Route>
       </Routes>
     </div>

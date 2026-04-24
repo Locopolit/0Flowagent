@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Robot, Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import PageHeader from "@/components/PageHeader";
+import EmptyState from "@/components/EmptyState";
 
 const emptyForm = {
   name: "",
@@ -51,14 +53,13 @@ export default function WorkspacesList() {
 
   return (
     <div className="p-8 max-w-[1280px] mx-auto" data-testid="workspaces-page">
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <p className="mono-label">// workspaces</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-tight">Agents</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Each workspace is an agent: one LLM + attached assets + private chat.</p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="rounded-sm gap-2" data-testid="new-workspace-button"><Plus size={14} /> New workspace</Button></DialogTrigger>
+      <PageHeader
+        label="workspaces"
+        title="Agents"
+        description="Each workspace is an agent: one LLM + attached assets + private chat."
+        action={
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild><Button className="rounded-sm gap-2" data-testid="new-workspace-button"><Plus size={14} /> New workspace</Button></DialogTrigger>
           <DialogContent className="max-w-2xl bg-card border-border">
             <DialogHeader><DialogTitle>Create workspace</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4">
@@ -95,14 +96,21 @@ export default function WorkspacesList() {
               <Button onClick={save} disabled={!form.name || !form.llm_config_id} data-testid="save-workspace-button">Create</Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
-      </div>
+          </Dialog>
+        }
+      />
 
       {items.length === 0 ? (
-        <div className="border border-dashed border-border p-16 text-center">
-          <Robot size={28} className="mx-auto text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground">No workspaces yet.</p>
-        </div>
+        <EmptyState
+          icon={Robot}
+          title="No workspaces yet"
+          description="Create a workspace to pair an LLM with your assets and start chatting."
+          action={
+            <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
+              <Plus size={14} /> New workspace
+            </Button>
+          }
+        />
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((w) => (

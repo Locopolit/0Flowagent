@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Brain, Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import PageHeader from "@/components/PageHeader";
+import EmptyState from "@/components/EmptyState";
 
 const emptyForm = { name: "", provider: "openai", api_key: "", base_url: "", model: "gpt-4o-mini" };
 
@@ -50,14 +52,13 @@ export default function LLMConfigs() {
 
   return (
     <div className="p-8 max-w-[1280px] mx-auto" data-testid="llm-page">
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <p className="mono-label">// llm providers</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-tight">Model providers</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Bring your own keys. Local models supported via OpenAI-compatible endpoints.</p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="rounded-sm gap-2" data-testid="add-llm-button"><Plus size={14} /> Add provider</Button></DialogTrigger>
+      <PageHeader
+        label="llm providers"
+        title="Model providers"
+        description="Bring your own keys. Local models supported via OpenAI-compatible endpoints."
+        action={
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild><Button className="rounded-sm gap-2" data-testid="add-llm-button"><Plus size={14} /> Add provider</Button></DialogTrigger>
           <DialogContent className="max-w-lg bg-card border-border">
             <DialogHeader><DialogTitle>Add LLM provider</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -97,14 +98,21 @@ export default function LLMConfigs() {
               <Button onClick={save} disabled={saving || !form.name || !form.model} data-testid="save-llm-button">{saving ? "Saving..." : "Add"}</Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
-      </div>
+          </Dialog>
+        }
+      />
 
       {items.length === 0 ? (
-        <div className="border border-dashed border-border p-16 text-center">
-          <Brain size={28} className="mx-auto text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground">No LLM providers configured. Add one to start building agents.</p>
-        </div>
+        <EmptyState
+          icon={Brain}
+          title="No model providers configured"
+          description="Add an OpenAI, Anthropic, Gemini, or local (Ollama / LM Studio) provider to start building agents."
+          action={
+            <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
+              <Plus size={14} /> Add provider
+            </Button>
+          }
+        />
       ) : (
         <div className="border border-border bg-card divide-y divide-border">
           {items.map((it) => (
