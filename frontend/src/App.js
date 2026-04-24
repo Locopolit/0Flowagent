@@ -10,6 +10,7 @@ import AssetDetail from "@/pages/AssetDetail";
 import LLMConfigs from "@/pages/LLMConfigs";
 import WorkspacesList from "@/pages/WorkspacesList";
 import WorkspaceDetail from "@/pages/WorkspaceDetail";
+import Templates from "@/pages/Templates";
 import "@/App.css";
 
 function Protected({ children }) {
@@ -44,6 +45,7 @@ export default function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="assets" element={<AssetsList />} />
+          <Route path="assets/templates" element={<Templates />} />
           <Route path="assets/:id" element={<AssetDetail />} />
           <Route path="llm" element={<LLMConfigs />} />
           <Route path="workspaces" element={<WorkspacesList />} />

@@ -38,6 +38,7 @@ AgentForge — an AI agent orchestration platform for IT/storage/backup admins. 
 - Stats endpoint
 - Control-room UI with sidebar + bg-grid + tool-call trace viewer
 - All interactive elements tagged with `data-testid`
+- **Asset Template Marketplace** (2026-04-24) — one-click presets for 6 vendors: Commvault, Rubrik, NetApp, Dell PowerMax, Veeam, Pure Storage. 32 pre-configured endpoints total. `GET /api/asset-templates` and `POST /api/asset-templates/{id}/instantiate`. Frontend gallery at `/assets/templates` with brand-colored accent bars.
 
 ## Backlog (P1)
 - P1: Streaming chat responses (SSE)

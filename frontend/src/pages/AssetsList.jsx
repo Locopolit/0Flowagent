@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Database, Trash, Plugs } from "@phosphor-icons/react";
+import { Plus, Database, Trash, Plugs, Sparkle } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 const emptyForm = {
@@ -64,10 +64,16 @@ export default function AssetsList() {
           <h1 className="mt-2 text-4xl font-semibold tracking-tight">Registered vendors</h1>
           <p className="mt-2 text-sm text-muted-foreground">External APIs that agents can invoke as tools.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="rounded-sm gap-2" data-testid="new-asset-button"><Plus size={14} /> Register asset</Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Link to="/assets/templates" data-testid="browse-templates-button">
+            <Button variant="outline" className="rounded-sm gap-2">
+              <Sparkle size={14} weight="duotone" /> Browse templates
+            </Button>
+          </Link>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="rounded-sm gap-2" data-testid="new-asset-button"><Plus size={14} /> Register asset</Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl bg-card border-border">
             <DialogHeader><DialogTitle>Register an asset</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4">
@@ -150,6 +156,7 @@ export default function AssetsList() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {loading ? (
