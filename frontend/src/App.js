@@ -1,54 +1,55 @@
-import { useEffect } from "react";
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "@/auth";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import AppLayout from "@/pages/AppLayout";
+import Dashboard from "@/pages/Dashboard";
+import AssetsList from "@/pages/AssetsList";
+import AssetDetail from "@/pages/AssetDetail";
+import LLMConfigs from "@/pages/LLMConfigs";
+import WorkspacesList from "@/pages/WorkspacesList";
+import WorkspaceDetail from "@/pages/WorkspaceDetail";
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+function Protected({ children }) {
+  const { user, ready } = useAuth();
+  if (!ready) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <span className="font-mono text-muted-foreground text-sm">[ loading ]</span>
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+function Public({ children }) {
+  const { user, ready } = useAuth();
+  if (!ready) return null;
+  if (user) return <Navigate to="/" replace />;
+  return children;
+}
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
-
-function App() {
+export default function App() {
   return (
     <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Public><Login /></Public>} />
+        <Route path="/register" element={<Public><Register /></Public>} />
+        <Route
+          path="/"
+          element={<Protected><AppLayout /></Protected>}
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="assets" element={<AssetsList />} />
+          <Route path="assets/:id" element={<AssetDetail />} />
+          <Route path="llm" element={<LLMConfigs />} />
+          <Route path="workspaces" element={<WorkspacesList />} />
+          <Route path="workspaces/:id" element={<WorkspaceDetail />} />
+        </Route>
+      </Routes>
     </div>
   );
 }
-
-export default App;
