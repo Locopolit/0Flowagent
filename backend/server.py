@@ -47,6 +47,14 @@ api = APIRouter(prefix="/api")
 
 
 # ---------------- Helpers ----------------
+def _normalize_base_url(provider: str, url: str) -> str:
+    """For local/Ollama providers, ensure base_url ends with /v1."""
+    url = (url or "").strip().rstrip("/")
+    if provider == "local" and url and not url.endswith("/v1"):
+        url += "/v1"
+    return url
+
+
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -174,7 +182,7 @@ async def create_llm_config(payload: LLMConfigIn, request: Request):
         "name": payload.name,
         "provider": payload.provider,
         "api_key": encrypt(payload.api_key or ""),
-        "base_url": (payload.base_url or "").strip(),
+        "base_url": _normalize_base_url(payload.provider, payload.base_url),
         "model": payload.model,
         "created_at": now_iso(),
     }
@@ -190,7 +198,7 @@ async def update_llm_config(cfg_id: str, payload: LLMConfigIn, request: Request)
     update = {
         "name": payload.name,
         "provider": payload.provider,
-        "base_url": (payload.base_url or "").strip(),
+        "base_url": _normalize_base_url(payload.provider, payload.base_url),
         "model": payload.model,
     }
     if payload.api_key:
@@ -208,6 +216,50 @@ async def delete_llm_config(cfg_id: str, request: Request):
     return {"ok": True}
 
 
+@api.post("/llm-configs/{cfg_id}/test")
+async def test_llm_config(cfg_id: str, request: Request):
+    """Send a short prompt to the configured LLM and return the response."""
+    user = await current_user(request)
+    cfg = await db.llm_configs.find_one({"id": cfg_id, "user_id": user["id"]}, {"_id": 0})
+    if not cfg:
+        raise HTTPException(404, "LLM config not found")
+    provider = cfg.get("provider")
+    api_key = decrypt(cfg.get("api_key", "")) if cfg.get("api_key") else ""
+    base_url = _normalize_base_url(provider, cfg.get("base_url", "")) or None
+    model = cfg.get("model", "")
+    test_prompt = "Respond with exactly: Hello from SLM"
+    try:
+        if provider in ("openai", "local"):
+            from openai import AsyncOpenAI
+            client = AsyncOpenAI(api_key=api_key or "sk-none", base_url=base_url)
+            resp = await client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": test_prompt}],
+                max_tokens=30,
+            )
+            reply = resp.choices[0].message.content
+        elif provider == "anthropic":
+            import anthropic
+            client = anthropic.AsyncAnthropic(api_key=api_key)
+            resp = await client.messages.create(
+                model=model,
+                max_tokens=30,
+                messages=[{"role": "user", "content": test_prompt}],
+            )
+            reply = resp.content[0].text
+        elif provider == "gemini":
+            from google import genai
+            client = genai.Client(api_key=api_key)
+            resp = client.models.generate_content(model=model, contents=test_prompt)
+            reply = resp.text
+        else:
+            raise HTTPException(400, f"Unsupported provider: {provider}")
+        return {"ok": True, "reply": reply, "model": model, "provider": provider}
+    except Exception as e:
+        logger.error(f"LLM test failed: {e}")
+        raise HTTPException(502, f"LLM test failed: {str(e)}")
+
+
 # ---------------- Assets ----------------
 class AuthConfig(BaseModel):
     # common
@@ -221,6 +273,10 @@ class AuthConfig(BaseModel):
     token_path: Optional[str] = None
     token_header: Optional[str] = "Authorization"
     token_prefix: Optional[str] = "Bearer "
+    # extra headers to send during login (e.g. Commvault Basic auth)
+    login_headers: Optional[Dict[str, str]] = None
+    # custom body fields for login (overrides username/password fields entirely)
+    login_body_fields: Optional[Dict[str, str]] = None
     # api-key-specific
     header_name: Optional[str] = None
     header_prefix: Optional[str] = None
@@ -718,7 +774,22 @@ async def chat(conv_id: str, payload: ChatIn, request: Request):
     ).sort("created_at", 1).to_list(40)
     messages: List[Dict] = []
     for m in history[-20:]:
-        messages.append({"role": m["role"], "content": m["content"]})
+        content = m.get("content") or ""
+        # For assistant messages with tool traces, include a brief summary
+        # so the LLM remembers what APIs it called and what it found
+        if m["role"] == "assistant" and m.get("trace"):
+            tool_summary_parts = []
+            for t in m["trace"]:
+                if t.get("type") == "tool_call":
+                    tool_summary_parts.append(f"[Called {t.get('name','')}]")
+                elif t.get("type") == "tool_result":
+                    r = t.get("result", {})
+                    ok = r.get("ok", False)
+                    sc = r.get("status_code", "?")
+                    tool_summary_parts.append(f"[Got HTTP {sc}, ok={ok}]")
+            if tool_summary_parts:
+                content = " ".join(tool_summary_parts) + "\n" + content
+        messages.append({"role": m["role"], "content": content})
     messages.append({"role": "user", "content": payload.message})
 
     # Save user message
@@ -750,7 +821,7 @@ async def chat(conv_id: str, payload: ChatIn, request: Request):
 
     try:
         final_text, trace = await run_chat(
-            llm_cfg, system_prompt, messages, tools, executor, max_iters=6,
+            llm_cfg, system_prompt, messages, tools, executor, max_iters=3,
         )
     except Exception as e:
         logger.exception("Chat failed")

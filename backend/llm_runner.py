@@ -38,6 +38,9 @@ async def run_chat(
 async def _run_openai_compat(llm, system_prompt, messages, tools, tool_executor, max_iters):
     from openai import AsyncOpenAI
     base_url = llm.get("base_url") or None
+    # Ensure local/Ollama URLs end with /v1 for OpenAI SDK
+    if llm.get("provider") == "local" and base_url and not base_url.rstrip("/").endswith("/v1"):
+        base_url = base_url.rstrip("/") + "/v1"
     api_key = llm.get("api_key") or "sk-none"  # local ollama doesn't need key
     client = AsyncOpenAI(api_key=api_key, base_url=base_url)
     model = llm.get("model") or "gpt-4o-mini"
@@ -95,7 +98,7 @@ async def _run_openai_compat(llm, system_prompt, messages, tools, tool_executor,
             oai_messages.append({
                 "role": "tool",
                 "tool_call_id": tc.id,
-                "content": json.dumps(result)[:15000],
+                "content": json.dumps(result, default=str)[:4000],
             })
     return "(Reached max tool-call iterations)", trace
 
@@ -151,7 +154,7 @@ async def _run_anthropic(llm, system_prompt, messages, tools, tool_executor, max
             tool_result_blocks.append({
                 "type": "tool_result",
                 "tool_use_id": tu.id,
-                "content": json.dumps(result)[:15000],
+                "content": json.dumps(result, default=str)[:4000],
             })
         conv.append({"role": "user", "content": tool_result_blocks})
     return "(Reached max tool-call iterations)", trace

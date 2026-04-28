@@ -41,19 +41,39 @@ async def _acquire_token(asset: Dict, client: httpx.AsyncClient) -> Optional[str
     cfg = asset.get("auth_config", {}) or {}
     login_path = cfg.get("login_path") or "/login"
     method = (cfg.get("login_method") or "POST").upper()
-    username_field = cfg.get("username_field") or "username"
-    password_field = cfg.get("password_field") or "password"
-    body = {
-        username_field: cfg.get("username", ""),
-        password_field: cfg.get("password", ""),
-    }
+
+    # Build login body: use custom login_body_fields if provided,
+    # else fall back to username_field/password_field
+    # login_body_fields values can use {username} and {password} as placeholders
+    login_body_fields = cfg.get("login_body_fields")
+    if login_body_fields and isinstance(login_body_fields, dict):
+        body = {}
+        for k, v in login_body_fields.items():
+            if isinstance(v, str):
+                v = v.replace("{username}", cfg.get("username", ""))
+                v = v.replace("{password}", cfg.get("password", ""))
+            body[k] = v
+    else:
+        username_field = cfg.get("username_field") or "username"
+        password_field = cfg.get("password_field") or "password"
+        body = {
+            username_field: cfg.get("username", ""),
+            password_field: cfg.get("password", ""),
+        }
+
+    # Extra headers for the login request (e.g. Commvault needs Authorization: Basic Og==)
+    login_headers = cfg.get("login_headers")
+    extra_headers = dict(login_headers) if login_headers and isinstance(login_headers, dict) else {}
+    extra_headers.setdefault("Content-Type", "application/json")
+    extra_headers.setdefault("Accept", "application/json")
+
     base_url = asset["base_url"].rstrip("/")
     url = base_url + ("/" + login_path.lstrip("/"))
     try:
         if method == "GET":
-            resp = await client.get(url, params=body, timeout=30)
+            resp = await client.get(url, params=body, headers=extra_headers, timeout=30)
         else:
-            resp = await client.post(url, json=body, timeout=30)
+            resp = await client.post(url, json=body, headers=extra_headers, timeout=30)
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
@@ -141,7 +161,16 @@ async def call_asset_endpoint(
                 header_prefix = "Bearer "
             headers[header_name] = f"{header_prefix}{token}"
 
-        req_kwargs = {"headers": headers, "auth": basic, "timeout": 60, "params": query_params or None}
+        # Filter out None values from query params (LLM may pass null)
+        clean_params = {k: v for k, v in (query_params or {}).items() if v is not None} or None
+        # Fall back to endpoint's default_body for GraphQL / POST endpoints
+        if body is None and method in ("POST", "PUT", "PATCH"):
+            body = endpoint.get("default_body")
+        # Always set Accept and Content-Type for JSON APIs
+        headers.setdefault("Accept", "application/json")
+        if method in ("POST", "PUT", "PATCH"):
+            headers.setdefault("Content-Type", "application/json")
+        req_kwargs = {"headers": headers, "auth": basic, "timeout": 60, "params": clean_params}
         if method in ("POST", "PUT", "PATCH", "DELETE") and body is not None:
             req_kwargs["json"] = body
 
@@ -166,10 +195,10 @@ def endpoint_to_tool_schema(asset: Dict, endpoint: Dict) -> Dict:
     """
     Build a tool schema (OpenAI function-calling compatible) for one endpoint.
     """
-    # sanitize names
-    safe_asset = "".join(c if c.isalnum() or c == "_" else "_" for c in asset["name"]).lower()
-    safe_ep = "".join(c if c.isalnum() or c == "_" else "_" for c in endpoint["name"]).lower()
-    name = f"{safe_asset}__{safe_ep}"[:60]
+    # sanitize names — keep them short for small LLMs
+    safe_vendor = "".join(c if c.isalnum() else "" for c in (asset.get("vendor") or asset["name"]))[:12].lower()
+    safe_ep = "".join(c if c.isalnum() or c == "_" else "_" for c in endpoint["name"]).strip("_").lower()
+    name = f"{safe_vendor}_{safe_ep}"[:60]
 
     props: Dict[str, Any] = {}
     required = []
@@ -201,9 +230,16 @@ def endpoint_to_tool_schema(asset: Dict, endpoint: Dict) -> Dict:
         "required": required,
         "additionalProperties": False,
     }
+    # Build concise description for LLM — strip examples, keep purpose
+    ep_desc = endpoint.get("description", "")
+    # Remove "Send a GraphQL..." and "Example: ..." noise for small LLMs
+    import re as _re
+    ep_desc = _re.split(r'\.\s*(?:Send |Example)', ep_desc)[0].strip().rstrip(".")
+    description = f"[{asset.get('vendor','')}] {ep_desc}"
+
     return {
         "name": name,
-        "description": f"{method} {endpoint.get('path','')} on {asset['name']} ({asset.get('vendor','')}). {endpoint.get('description','')}",
+        "description": description,
         "parameters": schema,
         "_asset_id": asset["id"],
         "_endpoint_id": endpoint["id"],

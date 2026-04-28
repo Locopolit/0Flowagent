@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Brain, Trash } from "@phosphor-icons/react";
+import { Plus, Brain, Trash, Lightning } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
@@ -31,6 +31,7 @@ export default function LLMConfigs() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(null);
 
   const load = async () => { const { data } = await api.get("/llm-configs"); setItems(data); };
   useEffect(() => { load(); }, []);
@@ -48,6 +49,18 @@ export default function LLMConfigs() {
   const remove = async (id) => {
     if (!window.confirm("Delete LLM provider?")) return;
     await api.delete(`/llm-configs/${id}`); load();
+  };
+
+  const testLlm = async (id) => {
+    setTesting(id);
+    try {
+      const { data } = await api.post(`/llm-configs/${id}/test`);
+      toast.success(`SLM responded: "${data.reply}"`, { duration: 5000 });
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setTesting(null);
+    }
   };
 
   return (
@@ -131,9 +144,22 @@ export default function LLMConfigs() {
                   </div>
                 </div>
               </div>
-              <button className="text-muted-foreground hover:text-red-400" onClick={() => remove(it.id)} data-testid={`delete-llm-${it.id}`}>
-                <Trash size={16} />
-              </button>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  disabled={testing === it.id}
+                  onClick={() => testLlm(it.id)}
+                  data-testid={`test-llm-${it.id}`}
+                >
+                  <Lightning size={14} className={testing === it.id ? "animate-pulse" : ""} />
+                  {testing === it.id ? "Testing..." : "Test"}
+                </Button>
+                <button className="text-muted-foreground hover:text-red-400" onClick={() => remove(it.id)} data-testid={`delete-llm-${it.id}`}>
+                  <Trash size={16} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
