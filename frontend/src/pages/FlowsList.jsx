@@ -172,7 +172,7 @@ export default function FlowsList() {
             return (
               <div
                 key={flow.id}
-                className="border border-border bg-card p-6 flex flex-col gap-4 group hover:border-neutral-600 transition-colors"
+                className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-6 flex flex-col gap-4 group hover:border-white/[0.12] transition-colors"
                 data-testid={`flow-card-${flow.id}`}
               >
                 <div className="flex items-start justify-between gap-3">

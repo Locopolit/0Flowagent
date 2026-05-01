@@ -2,43 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 body {
   margin: 0;
-  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
+  letter-spacing: -0.01em;
 }
 
 code, pre, .font-mono {
-  font-family: "JetBrains Mono", ui-monospace, Menlo, Monaco, monospace;
+  font-family: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Monaco, monospace;
 }
 
 @layer base {
   :root {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 98%;
+    --background: 225 15% 6%;
+    --foreground: 0 0% 96%;
+    --card: 225 12% 9%;
+    --card-foreground: 0 0% 96%;
+    --popover: 225 12% 9%;
+    --popover-foreground: 0 0% 96%;
     --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 64%;
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 84% 60%;
+    --secondary: 225 10% 14%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 225 10% 14%;
+    --muted-foreground: 220 8% 56%;
+    --accent: 225 10% 16%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
+    --border: 225 10% 14%;
+    --input: 225 10% 14%;
     --ring: 217 91% 60%;
-    --radius: 0.25rem;
+    --radius: 0.75rem;
   }
 }
 
@@ -51,21 +52,21 @@ code, pre, .font-mono {
 /* Forced dark-only look */
 html { color-scheme: dark; }
 
-/* Subtle grid background (control-room feel) */
-.bg-grid {
-  background-image:
-    linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
+/* iOS-style frosted glass */
+.glass {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: hsla(225, 12%, 9%, 0.72);
 }
 
 /* Mono label utility */
 .mono-label {
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 10px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: hsl(0 0% 50%);
+  color: hsl(220 8% 48%);
+  font-weight: 500;
 }
 
 /* Method pills */
@@ -84,17 +85,52 @@ html { color-scheme: dark; }
 .node-pill-action  { @apply bg-blue-500/10 text-blue-400 border border-blue-500/30; }
 .node-pill-logic   { @apply bg-amber-500/10 text-amber-400 border border-amber-500/30; }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: hsl(var(--background)); }
-::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(0 0% 28%); }
+/* Scrollbar - thin iOS style */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(225 10% 20%); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(225 10% 30%); }
 
 /* Chat prose tweaks */
 .prose-chat p { margin: 0.35rem 0; }
-.prose-chat pre { background: hsl(0 0% 8%); border: 1px solid hsl(var(--border)); border-radius: 4px; padding: 12px; overflow-x: auto; }
+.prose-chat pre { background: hsl(225 12% 8%); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 14px; overflow-x: auto; }
 .prose-chat code { font-family: "JetBrains Mono", monospace; font-size: 13px; }
 
 /* Blink caret */
 @keyframes blink { 0%,50% {opacity:1;} 51%,100% {opacity:0;} }
 .caret { animation: blink 1s infinite; }
+
+/* iOS card hover glow */
+.card-glow:hover {
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.08), 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+/* iOS-style smooth transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+}
+
+/* Custom bounce for thinking dots */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* Glass-morphism for header */
+.glass-header {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: hsla(225, 12%, 6%, 0.8);
+}
+
+/* iOS icon containers */
+.ios-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+}

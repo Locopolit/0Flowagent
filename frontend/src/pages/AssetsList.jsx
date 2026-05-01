@@ -68,25 +68,25 @@ export default function AssetsList() {
         action={
           <>
             <Link to="/assets/templates" data-testid="browse-templates-button">
-              <Button variant="outline" className="rounded-sm gap-2">
+              <Button variant="outline" className="rounded-xl gap-2">
                 <Sparkle size={14} weight="duotone" /> Browse templates
               </Button>
             </Link>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button className="rounded-sm gap-2" data-testid="new-asset-button"><Plus size={14} /> Register asset</Button>
+                <Button className="rounded-xl gap-2" data-testid="new-asset-button"><Plus size={14} /> Register asset</Button>
               </DialogTrigger>
           <DialogContent className="max-w-2xl bg-card border-border">
             <DialogHeader><DialogTitle>Register an asset</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="mono-label">name</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-neutral-900 mt-1" data-testid="asset-name" />
+                <Label className="text-[12px] font-medium text-white/60">name</Label>
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" data-testid="asset-name" />
               </div>
               <div>
-                <Label className="mono-label">vendor</Label>
+                <Label className="text-[12px] font-medium text-white/60">vendor</Label>
                 <Select value={form.vendor} onValueChange={(v) => setForm({ ...form, vendor: v })}>
-                  <SelectTrigger className="bg-neutral-900 mt-1" data-testid="asset-vendor"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" data-testid="asset-vendor"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {["Commvault", "Rubrik", "NetApp", "Dell PowerMax", "Pure Storage", "Veeam", "HPE", "IBM Storage", "Other"].map(v => (
                       <SelectItem key={v} value={v}>{v}</SelectItem>
@@ -95,18 +95,18 @@ export default function AssetsList() {
                 </Select>
               </div>
               <div className="col-span-2">
-                <Label className="mono-label">base url</Label>
+                <Label className="text-[12px] font-medium text-white/60">base url</Label>
                 <Input placeholder="https://vendor.example.com/api/v1" value={form.base_url}
-                  onChange={(e) => setForm({ ...form, base_url: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-sm" data-testid="asset-base-url" />
+                  onChange={(e) => setForm({ ...form, base_url: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm" data-testid="asset-base-url" />
               </div>
               <div className="col-span-2">
-                <Label className="mono-label">description</Label>
-                <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="bg-neutral-900 mt-1" />
+                <Label className="text-[12px] font-medium text-white/60">description</Label>
+                <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" />
               </div>
               <div className="col-span-2">
-                <Label className="mono-label">auth type</Label>
+                <Label className="text-[12px] font-medium text-white/60">auth type</Label>
                 <Select value={form.auth_type} onValueChange={(v) => setForm({ ...form, auth_type: v })}>
-                  <SelectTrigger className="bg-neutral-900 mt-1" data-testid="asset-auth-type"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" data-testid="asset-auth-type"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="token">Token-based (login → token)</SelectItem>
                     <SelectItem value="basic">Basic auth</SelectItem>
@@ -117,36 +117,36 @@ export default function AssetsList() {
               </div>
               {form.auth_type === "token" && (
                 <>
-                  <div><Label className="mono-label">login path</Label>
-                    <Input value={form.auth_config.login_path} onChange={(e) => setCfg({ login_path: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-sm" /></div>
-                  <div><Label className="mono-label">token path (dot)</Label>
-                    <Input placeholder="e.g. data.access_token" value={form.auth_config.token_path || ""} onChange={(e) => setCfg({ token_path: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-sm" /></div>
-                  <div><Label className="mono-label">username</Label>
-                    <Input value={form.auth_config.username} onChange={(e) => setCfg({ username: e.target.value })} className="bg-neutral-900 mt-1" /></div>
-                  <div><Label className="mono-label">password</Label>
-                    <Input type="password" value={form.auth_config.password} onChange={(e) => setCfg({ password: e.target.value })} className="bg-neutral-900 mt-1" /></div>
-                  <div><Label className="mono-label">token header</Label>
-                    <Input value={form.auth_config.token_header} onChange={(e) => setCfg({ token_header: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-sm" /></div>
-                  <div><Label className="mono-label">token prefix</Label>
-                    <Input value={form.auth_config.token_prefix} onChange={(e) => setCfg({ token_prefix: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-sm" /></div>
+                  <div><Label className="text-[12px] font-medium text-white/60">login path</Label>
+                    <Input value={form.auth_config.login_path} onChange={(e) => setCfg({ login_path: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm" /></div>
+                  <div><Label className="text-[12px] font-medium text-white/60">token path (dot)</Label>
+                    <Input placeholder="e.g. data.access_token" value={form.auth_config.token_path || ""} onChange={(e) => setCfg({ token_path: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm" /></div>
+                  <div><Label className="text-[12px] font-medium text-white/60">username</Label>
+                    <Input value={form.auth_config.username} onChange={(e) => setCfg({ username: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" /></div>
+                  <div><Label className="text-[12px] font-medium text-white/60">password</Label>
+                    <Input type="password" value={form.auth_config.password} onChange={(e) => setCfg({ password: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" /></div>
+                  <div><Label className="text-[12px] font-medium text-white/60">token header</Label>
+                    <Input value={form.auth_config.token_header} onChange={(e) => setCfg({ token_header: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm" /></div>
+                  <div><Label className="text-[12px] font-medium text-white/60">token prefix</Label>
+                    <Input value={form.auth_config.token_prefix} onChange={(e) => setCfg({ token_prefix: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm" /></div>
                 </>
               )}
               {form.auth_type === "basic" && (
                 <>
-                  <div><Label className="mono-label">username</Label>
-                    <Input value={form.auth_config.username} onChange={(e) => setCfg({ username: e.target.value })} className="bg-neutral-900 mt-1" /></div>
-                  <div><Label className="mono-label">password</Label>
-                    <Input type="password" value={form.auth_config.password} onChange={(e) => setCfg({ password: e.target.value })} className="bg-neutral-900 mt-1" /></div>
+                  <div><Label className="text-[12px] font-medium text-white/60">username</Label>
+                    <Input value={form.auth_config.username} onChange={(e) => setCfg({ username: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" /></div>
+                  <div><Label className="text-[12px] font-medium text-white/60">password</Label>
+                    <Input type="password" value={form.auth_config.password} onChange={(e) => setCfg({ password: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" /></div>
                 </>
               )}
               {form.auth_type === "api_key" && (
                 <>
-                  <div><Label className="mono-label">header name</Label>
-                    <Input value={form.auth_config.header_name} onChange={(e) => setCfg({ header_name: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-sm" /></div>
-                  <div><Label className="mono-label">header prefix</Label>
-                    <Input value={form.auth_config.header_prefix} onChange={(e) => setCfg({ header_prefix: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-sm" /></div>
-                  <div className="col-span-2"><Label className="mono-label">api key</Label>
-                    <Input type="password" value={form.auth_config.api_key} onChange={(e) => setCfg({ api_key: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-sm" /></div>
+                  <div><Label className="text-[12px] font-medium text-white/60">header name</Label>
+                    <Input value={form.auth_config.header_name} onChange={(e) => setCfg({ header_name: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm" /></div>
+                  <div><Label className="text-[12px] font-medium text-white/60">header prefix</Label>
+                    <Input value={form.auth_config.header_prefix} onChange={(e) => setCfg({ header_prefix: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm" /></div>
+                  <div className="col-span-2"><Label className="text-[12px] font-medium text-white/60">api key</Label>
+                    <Input type="password" value={form.auth_config.api_key} onChange={(e) => setCfg({ api_key: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm" /></div>
                 </>
               )}
             </div>
@@ -179,17 +179,17 @@ export default function AssetsList() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((a) => (
             <Link to={`/assets/${a.id}`} key={a.id} data-testid={`asset-card-${a.id}`}>
-              <div className="border border-border bg-card p-5 hover:border-neutral-600 transition-colors h-full">
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 hover:border-white/[0.12] transition-colors h-full">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="text-xs font-mono text-muted-foreground uppercase">{a.vendor}</div>
+                    <div className="text-xs font-mono text-white/40 uppercase">{a.vendor}</div>
                     <div className="text-lg font-medium mt-0.5">{a.name}</div>
                   </div>
-                  <button onClick={(e) => { e.preventDefault(); remove(a.id); }} className="text-muted-foreground hover:text-red-400" data-testid={`delete-asset-${a.id}`}>
+                  <button onClick={(e) => { e.preventDefault(); remove(a.id); }} className="text-white/40 hover:text-red-400" data-testid={`delete-asset-${a.id}`}>
                     <Trash size={16} />
                   </button>
                 </div>
-                <div className="mt-3 font-mono text-xs text-muted-foreground truncate">{a.base_url}</div>
+                <div className="mt-3 font-mono text-xs text-white/40 truncate">{a.base_url}</div>
                 <div className="mt-4 flex items-center gap-2">
                   <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 border border-border rounded-sm uppercase">
                     <Plugs size={10} /> {a.auth_type}

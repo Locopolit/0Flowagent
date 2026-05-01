@@ -60,21 +60,21 @@ export default function AssetDetail() {
     } finally { setRunning(null); }
   };
 
-  if (!asset) return <div className="p-8 font-mono text-sm text-muted-foreground">[ loading... ]</div>;
+  if (!asset) return <div className="p-8 font-mono text-sm text-white/40">[ loading... ]</div>;
 
   return (
     <div className="p-8 max-w-[1280px] mx-auto" data-testid="asset-detail">
-      <Link to="/assets" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-white mb-6"><ArrowLeft size={14} /> Back</Link>
+      <Link to="/assets" className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white mb-6"><ArrowLeft size={14} /> Back</Link>
 
       <div className="flex items-start justify-between mb-8">
         <div>
-          <p className="mono-label">// {asset.vendor}</p>
+          <p className="text-[12px] font-medium text-white/60">// {asset.vendor}</p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight">{asset.name}</h1>
-          <p className="mt-2 font-mono text-sm text-muted-foreground">{asset.base_url}</p>
-          {asset.description && <p className="mt-2 text-sm text-muted-foreground max-w-2xl">{asset.description}</p>}
+          <p className="mt-2 font-mono text-sm text-white/40">{asset.base_url}</p>
+          {asset.description && <p className="mt-2 text-sm text-white/40 max-w-2xl">{asset.description}</p>}
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="rounded-sm gap-2" onClick={testConn} data-testid="test-connection">
+          <Button variant="outline" size="sm" className="rounded-xl gap-2" onClick={testConn} data-testid="test-connection">
             <PlayCircle size={14} /> Test connection
           </Button>
         </div>
@@ -91,27 +91,27 @@ export default function AssetDetail() {
 
       <div className="flex items-end justify-between mb-4">
         <div>
-          <p className="mono-label">// endpoints</p>
+          <p className="text-[12px] font-medium text-white/60">// endpoints</p>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight">API Endpoints</h2>
-          <p className="text-sm text-muted-foreground">These become callable tools inside agent workspaces.</p>
+          <p className="text-sm text-white/40">These become callable tools inside agent workspaces.</p>
         </div>
         <Dialog open={epOpen} onOpenChange={setEpOpen}>
-          <DialogTrigger asChild><Button className="rounded-sm gap-2" data-testid="add-endpoint-button"><Plus size={14} /> Add endpoint</Button></DialogTrigger>
+          <DialogTrigger asChild><Button className="rounded-xl gap-2" data-testid="add-endpoint-button"><Plus size={14} /> Add endpoint</Button></DialogTrigger>
           <DialogContent className="max-w-xl bg-card border-border">
             <DialogHeader><DialogTitle>Add endpoint</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4">
-              <div><Label className="mono-label">name</Label><Input value={epForm.name} onChange={(e) => setEpForm({ ...epForm, name: e.target.value })} className="bg-neutral-900 mt-1" data-testid="endpoint-name" /></div>
-              <div><Label className="mono-label">method</Label>
+              <div><Label className="text-[12px] font-medium text-white/60">name</Label><Input value={epForm.name} onChange={(e) => setEpForm({ ...epForm, name: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" data-testid="endpoint-name" /></div>
+              <div><Label className="text-[12px] font-medium text-white/60">method</Label>
                 <Select value={epForm.method} onValueChange={(v) => setEpForm({ ...epForm, method: v })}>
-                  <SelectTrigger className="bg-neutral-900 mt-1" data-testid="endpoint-method"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" data-testid="endpoint-method"><SelectValue /></SelectTrigger>
                   <SelectContent>{["GET", "POST", "PUT", "PATCH", "DELETE"].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="col-span-2"><Label className="mono-label">path</Label>
-                <Input placeholder="/jobs/{id}" value={epForm.path} onChange={(e) => setEpForm({ ...epForm, path: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-sm" data-testid="endpoint-path" />
-                <p className="text-xs text-muted-foreground mt-1">Use <span className="font-mono">{`{name}`}</span> for path parameters — agents will fill them.</p>
+              <div className="col-span-2"><Label className="text-[12px] font-medium text-white/60">path</Label>
+                <Input placeholder="/jobs/{id}" value={epForm.path} onChange={(e) => setEpForm({ ...epForm, path: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm" data-testid="endpoint-path" />
+                <p className="text-xs text-white/40 mt-1">Use <span className="font-mono">{`{name}`}</span> for path parameters — agents will fill them.</p>
               </div>
-              <div className="col-span-2"><Label className="mono-label">description</Label><Textarea value={epForm.description} onChange={(e) => setEpForm({ ...epForm, description: e.target.value })} className="bg-neutral-900 mt-1" placeholder="What this endpoint does — helps the LLM decide when to use it." /></div>
+              <div className="col-span-2"><Label className="text-[12px] font-medium text-white/60">description</Label><Textarea value={epForm.description} onChange={(e) => setEpForm({ ...epForm, description: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" placeholder="What this endpoint does — helps the LLM decide when to use it." /></div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setEpOpen(false)}>Cancel</Button>
@@ -122,9 +122,9 @@ export default function AssetDetail() {
       </div>
 
       {endpoints.length === 0 ? (
-        <div className="border border-dashed border-border p-12 text-center text-sm text-muted-foreground">No endpoints yet. Add one to expose this asset to agents.</div>
+        <div className="border border-dashed border-border p-12 text-center text-sm text-white/40">No endpoints yet. Add one to expose this asset to agents.</div>
       ) : (
-        <div className="border border-border bg-card divide-y divide-border">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] divide-y divide-border">
           {endpoints.map((ep) => (
             <div key={ep.id} className="p-5" data-testid={`endpoint-${ep.id}`}>
               <div className="flex items-start justify-between">
@@ -132,15 +132,15 @@ export default function AssetDetail() {
                   <span className={`method-${ep.method} text-[10px] font-mono px-2 py-1 rounded-sm shrink-0 mt-0.5`}>{ep.method}</span>
                   <div className="min-w-0">
                     <div className="font-medium truncate">{ep.name}</div>
-                    <div className="font-mono text-xs text-muted-foreground truncate">{ep.path}</div>
-                    {ep.description && <div className="text-xs text-muted-foreground mt-1 max-w-2xl">{ep.description}</div>}
+                    <div className="font-mono text-xs text-white/40 truncate">{ep.path}</div>
+                    {ep.description && <div className="text-xs text-white/40 mt-1 max-w-2xl">{ep.description}</div>}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Button size="sm" variant="outline" className="rounded-sm gap-2" disabled={running === ep.id} onClick={() => runEp(ep)} data-testid={`run-endpoint-${ep.id}`}>
+                  <Button size="sm" variant="outline" className="rounded-xl gap-2" disabled={running === ep.id} onClick={() => runEp(ep)} data-testid={`run-endpoint-${ep.id}`}>
                     {running === ep.id ? "[ running... ]" : <><PlayCircle size={12} /> Run</>}
                   </Button>
-                  <button className="text-muted-foreground hover:text-red-400" onClick={() => deleteEp(ep.id)} data-testid={`delete-endpoint-${ep.id}`}>
+                  <button className="text-white/40 hover:text-red-400" onClick={() => deleteEp(ep.id)} data-testid={`delete-endpoint-${ep.id}`}>
                     <Trash size={14} />
                   </button>
                 </div>

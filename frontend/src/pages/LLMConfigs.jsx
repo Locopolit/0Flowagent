@@ -71,16 +71,16 @@ export default function LLMConfigs() {
         description="Bring your own keys. Local models supported via OpenAI-compatible endpoints."
         action={
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button className="rounded-sm gap-2" data-testid="add-llm-button"><Plus size={14} /> Add provider</Button></DialogTrigger>
-          <DialogContent className="max-w-lg bg-card border-border">
+            <DialogTrigger asChild><Button className="rounded-xl gap-2" data-testid="add-llm-button"><Plus size={14} /> Add provider</Button></DialogTrigger>
+          <DialogContent className="max-w-lg bg-white/[0.03] border-white/[0.06]">
             <DialogHeader><DialogTitle>Add LLM provider</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div><Label className="mono-label">label</Label>
-                <Input placeholder="e.g. My OpenAI key" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-neutral-900 mt-1" data-testid="llm-name" />
+              <div><Label className="text-[12px] font-medium text-white/60">label</Label>
+                <Input placeholder="e.g. My OpenAI key" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" data-testid="llm-name" />
               </div>
-              <div><Label className="mono-label">provider</Label>
+              <div><Label className="text-[12px] font-medium text-white/60">provider</Label>
                 <Select value={form.provider} onValueChange={(v) => setForm({ ...form, provider: v, model: DEFAULT_MODELS[v] || "" })}>
-                  <SelectTrigger className="bg-neutral-900 mt-1" data-testid="llm-provider"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" data-testid="llm-provider"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(HELP).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
                   </SelectContent>
@@ -88,22 +88,22 @@ export default function LLMConfigs() {
                 <p className="text-xs text-muted-foreground mt-1">{HELP[form.provider]?.help}</p>
               </div>
               {form.provider !== "local" && (
-                <div><Label className="mono-label">api key</Label>
-                  <Input type="password" value={form.api_key} onChange={(e) => setForm({ ...form, api_key: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-sm" data-testid="llm-api-key" />
+                <div><Label className="text-[12px] font-medium text-white/60">api key</Label>
+                  <Input type="password" value={form.api_key} onChange={(e) => setForm({ ...form, api_key: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm" data-testid="llm-api-key" />
                 </div>
               )}
               {form.provider === "local" && (
                 <>
-                  <div><Label className="mono-label">base url</Label>
-                    <Input placeholder="http://localhost:11434/v1" value={form.base_url} onChange={(e) => setForm({ ...form, base_url: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-sm" data-testid="llm-base-url" />
+                  <div><Label className="text-[12px] font-medium text-white/60">base url</Label>
+                    <Input placeholder="http://localhost:11434/v1" value={form.base_url} onChange={(e) => setForm({ ...form, base_url: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm" data-testid="llm-base-url" />
                   </div>
-                  <div><Label className="mono-label">api key (optional)</Label>
-                    <Input type="password" value={form.api_key} onChange={(e) => setForm({ ...form, api_key: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-sm" />
+                  <div><Label className="text-[12px] font-medium text-white/60">api key (optional)</Label>
+                    <Input type="password" value={form.api_key} onChange={(e) => setForm({ ...form, api_key: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm" />
                   </div>
                 </>
               )}
-              <div><Label className="mono-label">model</Label>
-                <Input value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-sm" data-testid="llm-model" />
+              <div><Label className="text-[12px] font-medium text-white/60">model</Label>
+                <Input value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm" data-testid="llm-model" />
               </div>
             </div>
             <DialogFooter>
@@ -127,19 +127,19 @@ export default function LLMConfigs() {
           }
         />
       ) : (
-        <div className="border border-border bg-card divide-y divide-border">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] divide-y divide-white/[0.06] overflow-hidden">
           {items.map((it) => (
             <div key={it.id} className="p-5 flex items-center justify-between" data-testid={`llm-${it.id}`}>
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 border border-border flex items-center justify-center">
-                  <Brain size={16} className="text-primary" />
+                <div className="w-10 h-10 rounded-xl bg-purple-500/15 flex items-center justify-center">
+                  <Brain size={18} weight="fill" className="text-purple-400" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{it.name}</span>
-                    <span className="text-[10px] font-mono uppercase px-2 py-0.5 border border-border rounded-sm">{it.provider}</span>
+                    <span className="font-medium text-[14px] text-white/90">{it.name}</span>
+                    <span className="text-[10px] font-medium uppercase px-2 py-0.5 rounded-md bg-white/[0.06] text-white/40">{it.provider}</span>
                   </div>
-                  <div className="font-mono text-xs text-muted-foreground mt-0.5">
+                  <div className="text-[12px] text-white/40 mt-0.5">
                     model: {it.model}{it.base_url ? ` · ${it.base_url}` : ""}{it.api_key_masked ? ` · key: ${it.api_key_masked}` : ""}
                   </div>
                 </div>
@@ -148,7 +148,7 @@ export default function LLMConfigs() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-1.5 text-xs"
+                  className="gap-1.5 text-xs rounded-lg border-white/[0.08] hover:bg-white/[0.06]"
                   disabled={testing === it.id}
                   onClick={() => testLlm(it.id)}
                   data-testid={`test-llm-${it.id}`}
@@ -156,7 +156,7 @@ export default function LLMConfigs() {
                   <Lightning size={14} className={testing === it.id ? "animate-pulse" : ""} />
                   {testing === it.id ? "Testing..." : "Test"}
                 </Button>
-                <button className="text-muted-foreground hover:text-red-400" onClick={() => remove(it.id)} data-testid={`delete-llm-${it.id}`}>
+                <button className="text-white/25 hover:text-red-400 transition-colors" onClick={() => remove(it.id)} data-testid={`delete-llm-${it.id}`}>
                   <Trash size={16} />
                 </button>
               </div>

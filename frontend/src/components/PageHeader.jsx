@@ -7,10 +7,10 @@ export default function PageHeader({ label, title, description, action, testid }
       data-testid={testid}
     >
       <div className="min-w-0">
-        {label && <p className="mono-label">// {label}</p>}
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight">{title}</h1>
+        {label && <p className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{label}</p>}
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">{title}</h1>
         {description && (
-          <p className="mt-2 text-sm text-muted-foreground max-w-xl">{description}</p>
+          <p className="mt-2 text-sm text-white/50 max-w-xl leading-relaxed">{description}</p>
         )}
       </div>
       {action && <div className="flex gap-2 items-center shrink-0">{action}</div>}

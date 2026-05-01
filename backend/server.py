@@ -24,7 +24,7 @@ from auth import (
 from crypto_util import encrypt, decrypt, mask
 from rag import extract_text_from_file, chunk_text, retrieve_context
 from asset_tools import test_asset_connection, call_asset_endpoint, endpoint_to_tool_schema
-from llm_runner import run_chat
+from llm_graph import run_chat
 from asset_templates import TEMPLATES, get_template
 from flow_executor import execute_flow
 
@@ -821,7 +821,7 @@ async def chat(conv_id: str, payload: ChatIn, request: Request):
 
     try:
         final_text, trace = await run_chat(
-            llm_cfg, system_prompt, messages, tools, executor, max_iters=3,
+            llm_cfg, system_prompt, messages, tools, executor, max_iters=5,
         )
     except Exception as e:
         logger.exception("Chat failed")

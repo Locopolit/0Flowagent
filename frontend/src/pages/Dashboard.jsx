@@ -3,28 +3,30 @@ import api from "@/api";
 import { Link } from "react-router-dom";
 import {
   Database, Brain, Robot, ChatsCircle, ArrowUpRight, TreeStructure, Play,
-  WebhooksLogo, Clock, Plus,
+  WebhooksLogo, Clock, Plus, Lightning, Shield, Pulse,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/PageHeader";
 
-function StatCard({ label, value, icon: Icon, to, testid }) {
+function StatCard({ label, value, icon: Icon, to, testid, iconColor, iconBg }) {
   const content = (
     <div
-      className="group border border-border bg-card hover:border-neutral-600 transition-colors p-6 flex items-start justify-between"
+      className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm hover:bg-white/[0.06] transition-all duration-300 p-6 flex items-start justify-between overflow-hidden hover:shadow-xl hover:shadow-black/30 hover:-translate-y-1 hover:border-white/[0.1]"
       data-testid={testid}
     >
-      <div>
-        <p className="mono-label">{label}</p>
-        <p className="mt-2 text-4xl font-semibold tracking-tight tabular-nums">{value ?? "—"}</p>
+      <div className="relative">
+        <p className="text-[12px] font-medium uppercase tracking-wider text-white/40">{label}</p>
+        <p className="mt-2 text-4xl font-semibold tracking-tight tabular-nums text-white">{value ?? "—"}</p>
       </div>
-      <div className="flex flex-col items-end gap-3">
-        <Icon size={20} weight="duotone" className="text-muted-foreground group-hover:text-primary transition-colors" />
-        <ArrowUpRight size={14} className="text-muted-foreground group-hover:text-white transition-colors" />
+      <div className="relative flex flex-col items-end gap-3">
+        <div className={`w-10 h-10 rounded-xl ${iconBg || "bg-blue-500/15"} flex items-center justify-center shadow-sm`}>
+          <Icon size={20} weight="fill" className={iconColor || "text-blue-400"} />
+        </div>
+        {to && <ArrowUpRight size={14} className="text-white/30 group-hover:text-white transition-colors" />}
       </div>
     </div>
   );
-  return to ? <Link to={to}>{content}</Link> : content;
+  return to ? <Link to={to} className="block">{content}</Link> : content;
 }
 
 function relativeTime(iso) {
@@ -62,60 +64,65 @@ export default function Dashboard() {
     <div className="p-8 max-w-[1280px] mx-auto" data-testid="dashboard">
       <PageHeader
         label="overview"
-        title="Command center"
+        title="Command Center"
         description={
           <>
-            Register external vendor APIs as <span className="text-white">Assets</span>, bring your own LLM,
-            and compose agent <span className="text-white">Workspaces</span> that call the right API at the right moment.
+            Register external vendor APIs as <span className="text-white font-medium">Assets</span>, bring your own LLM,
+            and compose agent <span className="text-white font-medium">Workspaces</span> that call the right API at the right moment.
           </>
         }
         action={
-          <div className="font-mono text-[11px] text-muted-foreground">
-            status: <span className="text-emerald-400">● operational</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[12px] font-medium text-emerald-400">Operational</span>
+            </div>
           </div>
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        <StatCard label="Assets" value={stats?.assets} icon={Database} to="/assets" testid="stat-assets" />
-        <StatCard label="LLM Providers" value={stats?.llm_configs} icon={Brain} to="/llm" testid="stat-llm" />
-        <StatCard label="Workspaces" value={stats?.workspaces} icon={Robot} to="/workspaces" testid="stat-workspaces" />
-        <StatCard label="Conversations" value={stats?.conversations} icon={ChatsCircle} testid="stat-conv" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+        <StatCard label="Assets" value={stats?.assets} icon={Database} to="/assets" testid="stat-assets" iconColor="text-blue-400" iconBg="bg-blue-500/15" />
+        <StatCard label="LLM Providers" value={stats?.llm_configs} icon={Brain} to="/llm" testid="stat-llm" iconColor="text-purple-400" iconBg="bg-purple-500/15" />
+        <StatCard label="Workspaces" value={stats?.workspaces} icon={Robot} to="/workspaces" testid="stat-workspaces" iconColor="text-teal-400" iconBg="bg-teal-500/15" />
+        <StatCard label="Conversations" value={stats?.conversations} icon={ChatsCircle} to="/workspaces" testid="stat-conv" iconColor="text-orange-400" iconBg="bg-orange-500/15" />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4">
+      <div className="grid lg:grid-cols-3 gap-5">
         {/* Recent flows — span two columns */}
-        <div className="lg:col-span-2 border border-border bg-card p-6">
+        <div className="lg:col-span-2 rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <p className="mono-label">// recent flows</p>
-              <h3 className="mt-1 text-xl font-medium">Automation activity</h3>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/30">Activity</p>
+              <h3 className="mt-1 text-xl font-semibold text-white">Recent Flows</h3>
             </div>
             <Link to="/flows">
-              <Button variant="outline" size="sm" className="gap-2 rounded-sm">
+              <Button variant="outline" size="sm" className="gap-2 rounded-xl border-white/10 hover:bg-white/[0.06] text-white/70">
                 <TreeStructure size={14} /> View all
               </Button>
             </Link>
           </div>
 
           {flowsLoading ? (
-            <div className="py-10 text-center font-mono text-xs text-muted-foreground">
-              [ loading ]
+            <div className="py-10 text-center text-sm text-white/40">
+              Loading...
             </div>
           ) : recent.length === 0 ? (
             <div className="py-10 text-center">
-              <TreeStructure size={28} className="mx-auto text-muted-foreground mb-2" weight="duotone" />
-              <p className="text-sm text-muted-foreground mb-4">
-                No flows yet. Automate vendor API calls on webhook or schedule triggers.
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-orange-500/15 flex items-center justify-center mb-3">
+                <TreeStructure size={22} className="text-orange-400" weight="fill" />
+              </div>
+              <p className="text-sm text-white/50 mb-4">
+                No flows yet. Automate vendor API calls with triggers.
               </p>
               <Link to="/flows/new">
-                <Button size="sm" className="gap-2">
+                <Button size="sm" className="gap-2 rounded-xl">
                   <Plus size={14} /> New flow
                 </Button>
               </Link>
             </div>
           ) : (
-            <div className="divide-y divide-border border border-border">
+            <div className="divide-y divide-white/[0.06] rounded-xl border border-white/[0.06] overflow-hidden">
               {recent.map((f) => {
                 const nodes = f.nodes || [];
                 const trig = nodes.find((n) => n.type === "trigger");
@@ -127,26 +134,26 @@ export default function Dashboard() {
                   <Link
                     key={f.id}
                     to={`/flows/${f.id}`}
-                    className="flex items-center gap-3 p-3 hover:bg-neutral-900/50 transition-colors"
+                    className="flex items-center gap-3 p-3.5 hover:bg-white/[0.04] transition-colors"
                     data-testid={`dash-flow-${f.id}`}
                   >
-                    <div className="p-1.5 border border-border node-pill-trigger rounded-sm">
-                      <TrigIcon size={12} />
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/15 flex items-center justify-center">
+                      <TrigIcon size={14} className="text-orange-400" weight="fill" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium truncate">{f.name}</span>
+                        <span className="text-[13px] font-medium truncate text-white/90">{f.name}</span>
                         {trig && (
-                          <span className="text-[9px] font-mono uppercase text-muted-foreground">
+                          <span className="text-[9px] font-mono uppercase text-white/30 bg-white/[0.06] px-1.5 py-0.5 rounded-md">
                             {trig.subtype}
                           </span>
                         )}
                       </div>
-                      <div className="font-mono text-[10px] text-muted-foreground tabular-nums">
+                      <div className="text-[11px] text-white/35 mt-0.5">
                         {nodes.length} nodes · updated {relativeTime(f.updated_at || f.created_at)}
                       </div>
                     </div>
-                    <ArrowUpRight size={14} className="text-muted-foreground shrink-0" />
+                    <ArrowUpRight size={14} className="text-white/20 shrink-0" />
                   </Link>
                 );
               })}
@@ -155,21 +162,21 @@ export default function Dashboard() {
         </div>
 
         {/* Quick start */}
-        <div className="border border-border bg-card p-6">
-          <p className="mono-label">// quick start</p>
-          <h3 className="mt-1 text-xl font-medium">Set up your first agent</h3>
-          <ol className="mt-5 space-y-3 text-sm">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm p-6">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/30">Setup</p>
+          <h3 className="mt-1 text-xl font-semibold text-white">Get Started</h3>
+          <ol className="mt-5 space-y-4 text-sm">
             {[
-              ["1", "LLM Provider", "Add a key or point to a local LLM.", "/llm"],
-              ["2", "Asset", "Configure the vendor and its auth.", "/assets"],
-              ["3", "Endpoints", "Describe the API calls agents can make.", "/assets"],
-              ["4", "Workspace", "Pick the LLM, attach Assets, chat.", "/workspaces"],
-            ].map(([n, title, desc, to]) => (
-              <li key={n} className="flex gap-3">
-                <div className="font-mono text-xs text-primary mt-0.5 w-4 tabular-nums">{n}</div>
+              ["1", "LLM Provider", "Add a key or point to a local LLM.", "/llm", "bg-purple-500"],
+              ["2", "Asset", "Configure the vendor and its auth.", "/assets", "bg-indigo-500"],
+              ["3", "Endpoints", "Describe the API calls agents can make.", "/assets", "bg-blue-500"],
+              ["4", "Workspace", "Pick the LLM, attach Assets, chat.", "/workspaces", "bg-teal-500"],
+            ].map(([n, title, desc, to, color]) => (
+              <li key={n} className="flex gap-3 items-start">
+                <div className={`w-6 h-6 rounded-lg ${color} flex items-center justify-center text-[11px] font-bold text-white shadow-sm shrink-0 mt-0.5`}>{n}</div>
                 <div>
-                  <Link to={to} className="text-white hover:underline">{title}</Link>
-                  <p className="text-muted-foreground text-xs">{desc}</p>
+                  <Link to={to} className="text-white/90 font-medium hover:text-white transition-colors">{title}</Link>
+                  <p className="text-white/40 text-xs mt-0.5">{desc}</p>
                 </div>
               </li>
             ))}

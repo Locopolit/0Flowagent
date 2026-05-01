@@ -59,15 +59,15 @@ export default function WorkspacesList() {
         description="Each workspace is an agent: one LLM + attached assets + private chat."
         action={
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button className="rounded-sm gap-2" data-testid="new-workspace-button"><Plus size={14} /> New workspace</Button></DialogTrigger>
-          <DialogContent className="max-w-2xl bg-card border-border">
+            <DialogTrigger asChild><Button className="rounded-xl gap-2" data-testid="new-workspace-button"><Plus size={14} /> New workspace</Button></DialogTrigger>
+          <DialogContent className="max-w-2xl bg-white/[0.03] border-white/[0.06]">
             <DialogHeader><DialogTitle>Create workspace</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2"><Label className="mono-label">name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-neutral-900 mt-1" data-testid="workspace-name" /></div>
-              <div className="col-span-2"><Label className="mono-label">description</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="bg-neutral-900 mt-1" /></div>
-              <div className="col-span-2"><Label className="mono-label">llm provider</Label>
+              <div className="col-span-2"><Label className="text-[12px] font-medium text-white/60">name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" data-testid="workspace-name" /></div>
+              <div className="col-span-2"><Label className="text-[12px] font-medium text-white/60">description</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" /></div>
+              <div className="col-span-2"><Label className="text-[12px] font-medium text-white/60">llm provider</Label>
                 <Select value={form.llm_config_id} onValueChange={(v) => setForm({ ...form, llm_config_id: v })}>
-                  <SelectTrigger className="bg-neutral-900 mt-1" data-testid="workspace-llm"><SelectValue placeholder="Select LLM..." /></SelectTrigger>
+                  <SelectTrigger className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5" data-testid="workspace-llm"><SelectValue placeholder="Select LLM..." /></SelectTrigger>
                   <SelectContent>
                     {llms.length === 0 ? <div className="p-3 text-sm text-muted-foreground">No LLMs yet. <Link to="/llm" className="text-primary underline">Add one</Link></div> :
                       llms.map((l) => <SelectItem key={l.id} value={l.id}>{l.name} — {l.provider}/{l.model}</SelectItem>)}
@@ -75,8 +75,8 @@ export default function WorkspacesList() {
                 </Select>
               </div>
               <div className="col-span-2">
-                <Label className="mono-label">attach assets</Label>
-                <div className="mt-2 border border-border bg-neutral-950 p-3 max-h-44 overflow-y-auto space-y-1">
+                <Label className="text-[12px] font-medium text-white/60">attach assets</Label>
+                <div className="mt-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 max-h-44 overflow-y-auto space-y-1">
                   {assets.length === 0 ? <div className="text-sm text-muted-foreground p-1">No assets yet. <Link to="/assets" className="text-primary underline">Add one</Link></div> :
                     assets.map((a) => (
                       <label key={a.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-neutral-900 px-2 py-1.5">
@@ -87,8 +87,8 @@ export default function WorkspacesList() {
                     ))}
                 </div>
               </div>
-              <div className="col-span-2"><Label className="mono-label">system prompt</Label>
-                <Textarea rows={4} value={form.system_prompt} onChange={(e) => setForm({ ...form, system_prompt: e.target.value })} className="bg-neutral-900 mt-1 font-mono text-xs" />
+              <div className="col-span-2"><Label className="text-[12px] font-medium text-white/60">system prompt</Label>
+                <Textarea rows={4} value={form.system_prompt} onChange={(e) => setForm({ ...form, system_prompt: e.target.value })} className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-xs" />
               </div>
             </div>
             <DialogFooter>
@@ -106,27 +106,29 @@ export default function WorkspacesList() {
           title="No workspaces yet"
           description="Create a workspace to pair an LLM with your assets and start chatting."
           action={
-            <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
+            <Button size="sm" className="gap-2 rounded-xl" onClick={() => setOpen(true)}>
               <Plus size={14} /> New workspace
             </Button>
           }
         />
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {items.map((w) => (
             <Link key={w.id} to={`/workspaces/${w.id}`} data-testid={`workspace-card-${w.id}`}>
-              <div className="border border-border bg-card p-5 hover:border-neutral-600 transition-colors h-full">
+              <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 hover:bg-white/[0.06] hover:border-white/[0.1] transition-all h-full">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <div className="mono-label">// agent</div>
-                    <div className="text-lg font-medium mt-0.5">{w.name}</div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-teal-500/15 flex items-center justify-center">
+                      <Robot size={17} weight="fill" className="text-teal-400" />
+                    </div>
+                    <div>
+                      <div className="text-[14px] font-semibold text-white/90">{w.name}</div>
+                      <div className="text-[11px] text-white/35 mt-0.5">{w.asset_ids?.length || 0} assets attached</div>
+                    </div>
                   </div>
-                  <button onClick={(e) => { e.preventDefault(); remove(w.id); }} className="text-muted-foreground hover:text-red-400"><Trash size={14} /></button>
+                  <button onClick={(e) => { e.preventDefault(); remove(w.id); }} className="text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><Trash size={14} /></button>
                 </div>
-                {w.description && <div className="text-sm text-muted-foreground mt-2 line-clamp-2">{w.description}</div>}
-                <div className="mt-4 flex gap-2 flex-wrap">
-                  <span className="text-[10px] font-mono px-2 py-0.5 border border-border rounded-sm">{w.asset_ids?.length || 0} assets</span>
-                </div>
+                {w.description && <div className="text-[12px] text-white/40 mt-3 line-clamp-2 leading-relaxed">{w.description}</div>}
               </div>
             </Link>
           ))}

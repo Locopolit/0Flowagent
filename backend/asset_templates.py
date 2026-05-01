@@ -32,18 +32,50 @@ TEMPLATES: List[Dict] = [
         "base_url_example": "https://commvault.example.com/webconsole/api",
         "color": "#E31B23",
         "endpoints": [
+            # ── Clients ──
             {"name": "list_clients", "method": "GET", "path": "/Client",
              "description": "List all backup clients registered with the CommServe."},
+            {"name": "get_client", "method": "GET", "path": "/Client/{clientId}",
+             "description": "Get details of a specific client by clientId including connectivity status and installed agents."},
+            {"name": "get_client_properties", "method": "GET", "path": "/Client/{clientId}/properties",
+             "description": "Get full properties of a client: schedules, storage policies, network config, readiness status. Essential for RCA."},
+            # ── Jobs (last 24h) ──
             {"name": "list_jobs", "method": "GET", "path": "/Job",
-             "description": "List recent backup/restore jobs. Use status filter like 'pending', 'running', 'completed'.",
+             "description": "List backup/restore jobs from the last 24 hours. Always pass completedJobLookupTime=86400 to limit to last 24h. Filter by status like 'failed' for RCA.",
              "query_params": [
-                 {"name": "status", "description": "Job status filter: pending, running, completed, failed, etc.", "required": False},
+                 {"name": "completedJobLookupTime", "description": "Seconds to look back for completed jobs. Use 86400 for last 24 hours. ALWAYS include this.", "required": False},
+                 {"name": "status", "description": "Job status filter: pending, running, completed, failed, killed, etc.", "required": False},
                  {"name": "jobFilter", "description": "Filter e.g. 'activeJobs'", "required": False},
+                 {"name": "clientId", "description": "Filter jobs by specific client ID", "required": False},
+                 {"name": "subclientId", "description": "Filter jobs by specific subclient ID", "required": False},
              ]},
             {"name": "get_job", "method": "GET", "path": "/Job/{jobId}",
-             "description": "Get details of a specific backup or restore job by jobId."},
+             "description": "Get details of a specific job by jobId including failure reason, error code, start/end time, bytes transferred."},
+            # ── Events / Logs ──
+            {"name": "get_events", "method": "GET", "path": "/Events",
+             "description": "Get event viewer logs. Use jobId filter to find error events for a failed job. Critical for root cause analysis.",
+             "query_params": [
+                 {"name": "jobId", "description": "Filter events for a specific job ID.", "required": False},
+                 {"name": "level", "description": "Event severity: 0=info, 2=warning, 4=error, 6=critical.", "required": False},
+                 {"name": "showInfo", "description": "Set to false to hide info events.", "required": False},
+                 {"name": "showMinor", "description": "Set to false to hide minor events.", "required": False},
+             ]},
+            # ── Alerts ──
+            {"name": "get_alerts", "method": "GET", "path": "/AlertRule",
+             "description": "List all configured alert rules and their trigger conditions."},
+            {"name": "get_triggered_alerts", "method": "GET", "path": "/Alert",
+             "description": "Get recently triggered alerts including severity, description, and affected entity. Useful for RCA."},
+            # ── Subclients & Storage ──
             {"name": "list_subclients", "method": "GET", "path": "/Subclient",
-             "description": "List subclients (logical data grouping) for backup policies."},
+             "description": "List subclients (logical data grouping) for backup policies.",
+             "query_params": [
+                 {"name": "clientId", "description": "Filter subclients by client ID.", "required": False},
+             ]},
+            {"name": "get_subclient", "method": "GET", "path": "/Subclient/{subclientId}",
+             "description": "Get subclient details: content, storage policy, schedule, and last backup status."},
+            {"name": "list_storage_policies", "method": "GET", "path": "/StoragePolicy",
+             "description": "List all storage policies including copy precedence, retention rules, and associated media agents."},
+            # ── Actions ──
             {"name": "start_backup", "method": "POST", "path": "/Subclient/{subclientId}/action/backup",
              "description": "Trigger an on-demand backup for the given subclient."},
         ],

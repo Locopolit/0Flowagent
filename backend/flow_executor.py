@@ -16,7 +16,7 @@ import re
 from typing import Any, Dict, List, Optional
 
 from asset_tools import call_asset_endpoint
-from llm_runner import run_chat
+from llm_graph import run_chat
 
 logger = logging.getLogger("agentforge.flows")
 
