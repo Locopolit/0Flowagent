@@ -15,18 +15,23 @@ export default function WorkspaceDetail() {
   const [currentConv, setCurrentConv] = useState(null);
   const [messages, setMessages] = useState([]);
   const [docs, setDocs] = useState([]);
+  const [assets, setAssets] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const fileInputRef = useRef();
   const scrollRef = useRef();
 
   const loadWs = async () => {
-    const [w, c, d] = await Promise.all([
+    const [w, c, d, a] = await Promise.all([
       api.get(`/workspaces/${id}`),
       api.get(`/workspaces/${id}/conversations`),
       api.get(`/workspaces/${id}/documents`),
+      api.get(`/assets`),
     ]);
     setWs(w.data); setConversations(c.data); setDocs(d.data);
+    // Filter to only attached assets
+    const attachedIds = new Set(w.data.asset_ids || []);
+    setAssets(a.data.filter((x) => attachedIds.has(x.id)));
     if (c.data.length > 0 && !currentConv) {
       selectConv(c.data[0]);
     }
@@ -154,14 +159,42 @@ export default function WorkspaceDetail() {
                   </div>
                   <div className="text-lg font-semibold mt-2 text-white">Ready for your questions</div>
                   <div className="text-[13px] text-white/45 mt-2 leading-relaxed">
-                    Ask about your backup infrastructure, run root cause analysis on failures, or check system status.
+                    Ask anything about the systems connected to this workspace.
                   </div>
                   <div className="mt-5 flex flex-wrap gap-2 justify-center">
-                    {["Show failed jobs (24h)", "Run RCA", "List clients"].map((q) => (
-                      <button key={q} onClick={() => { setInput(q); }} className="px-4 py-2 text-[12px] font-medium rounded-full border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/[0.15] text-white/60 hover:text-white transition-all">
-                        {q}
-                      </button>
-                    ))}
+                    {(() => {
+                      const vendors = assets.map((a) => (a.vendor || a.name || "").toLowerCase());
+                      const suggestions = [];
+                      if (vendors.some((v) => v.includes("servicenow"))) {
+                        suggestions.push("List all servers", "Show business services", "List application servers", "Show database instances");
+                      }
+                      if (vendors.some((v) => v.includes("commvault"))) {
+                        suggestions.push("Show failed jobs (24h)", "List clients", "Run RCA on failures");
+                      }
+                      if (vendors.some((v) => v.includes("rubrik"))) {
+                        suggestions.push("Show backup status", "List anomaly events", "Check cluster health");
+                      }
+                      if (vendors.some((v) => v.includes("netapp"))) {
+                        suggestions.push("List volumes", "Show cluster info", "List aggregates");
+                      }
+                      if (vendors.some((v) => v.includes("dell"))) {
+                        suggestions.push("List storage groups", "Show array performance");
+                      }
+                      if (vendors.some((v) => v.includes("veeam"))) {
+                        suggestions.push("Show recent backups", "List protected VMs");
+                      }
+                      if (vendors.some((v) => v.includes("pure"))) {
+                        suggestions.push("List volumes", "Show array performance");
+                      }
+                      if (suggestions.length === 0) {
+                        suggestions.push("What can you do?", "List available tools", "Help me get started");
+                      }
+                      return suggestions.slice(0, 4).map((q) => (
+                        <button key={q} onClick={() => { setInput(q); }} className="px-4 py-2 text-[12px] font-medium rounded-full border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/[0.15] text-white/60 hover:text-white transition-all">
+                          {q}
+                        </button>
+                      ));
+                    })()}
                   </div>
                 </div>
               </div>

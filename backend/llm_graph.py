@@ -2,14 +2,16 @@
 structured ReAct graph.  Keeps the same external API so server.py
 needs minimal changes.
 
-Speed optimisations vs. the old runner:
+Speed optimisations:
+  • Parallel tool execution — all tool calls in a single turn run
+    concurrently via asyncio.gather.
   • Smart truncation — large API payloads are trimmed to the first N
     items + a summary line *before* being sent to the LLM.
   • Max-iterations capped with early-exit on empty tool calls.
-  • Tool results ≤ 2 KB (was 4 KB) — less tokens for 3B models.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
@@ -33,7 +35,7 @@ logger = logging.getLogger("agentforge.graph")
 
 # --------------- helpers ------------------------------------------------
 
-MAX_TOOL_RESULT_CHARS = 2000  # keep payloads small for 3B models
+MAX_TOOL_RESULT_CHARS = 4000  # allow enough data for meaningful analysis
 
 
 def _truncate_result(result: Any) -> str:
@@ -106,7 +108,7 @@ def _build_graph(
         api_key=api_key,
         base_url=base_url,
         temperature=0,
-        max_tokens=1024,  # keep responses short and fast
+        max_tokens=2048,  # allow room for tool calls + final answers
     )
 
     # --- Convert tool schemas to LangChain tools ---
@@ -170,29 +172,41 @@ def _build_graph(
         }
 
     async def call_tools(state: AgentState) -> dict:
-        """Execute tool calls from the last AI message."""
+        """Execute tool calls from the last AI message — in parallel."""
         last_msg = state["messages"][-1]
         tool_calls = getattr(last_msg, "tool_calls", [])
         trace = list(state.get("trace") or [])
 
-        tool_messages = []
+        # Log all calls first
         for tc in tool_calls:
-            name = tc["name"]
-            args = tc.get("args", {})
-            tc_id = tc.get("id", name)
-
             trace.append({
                 "type": "tool_call",
-                "name": name,
-                "arguments": args,
-                "id": tc_id,
+                "name": tc["name"],
+                "arguments": tc.get("args", {}),
+                "id": tc.get("id", tc["name"]),
             })
 
+        # Execute all tool calls concurrently
+        async def _exec_one(tc):
+            name = tc["name"]
+            args = tc.get("args", {})
             tmeta = tool_map.get(name)
             if tmeta:
-                result = await tool_executor(tmeta, args)
-            else:
-                result = {"error": f"Unknown tool: {name}"}
+                return await tool_executor(tmeta, args)
+            return {"error": f"Unknown tool: {name}"}
+
+        results = await asyncio.gather(
+            *[_exec_one(tc) for tc in tool_calls],
+            return_exceptions=True,
+        )
+
+        tool_messages = []
+        for tc, result in zip(tool_calls, results):
+            name = tc["name"]
+            tc_id = tc.get("id", name)
+
+            if isinstance(result, Exception):
+                result = {"error": str(result)}
 
             trace.append({
                 "type": "tool_result",

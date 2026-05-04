@@ -385,7 +385,10 @@ async def test_asset(asset_id: str, request: Request):
     asset = await db.assets.find_one({"id": asset_id, "user_id": user["id"]}, {"_id": 0})
     if not asset:
         raise HTTPException(404, "Not found")
-    result = await test_asset_connection(asset)
+    endpoints = await db.asset_endpoints.find(
+        {"asset_id": asset_id, "user_id": user["id"]}, {"_id": 0}
+    ).to_list(10)
+    result = await test_asset_connection(asset, endpoints=endpoints)
     return result
 
 
@@ -570,7 +573,7 @@ class WorkspaceIn(BaseModel):
     description: Optional[str] = ""
     llm_config_id: str
     asset_ids: List[str] = []
-    system_prompt: Optional[str] = "You are a helpful assistant that can use tools to call external APIs."
+    system_prompt: Optional[str] = "You are AgentForge — an intelligent IT operations assistant. You have access to external vendor APIs as tools. Discover and analyse infrastructure, services, databases, and applications. Perform root cause analysis, monitor operational status, generate reports, and answer questions by querying the attached systems. Always decide which tool to call based on the user's intent, extract parameters carefully, and present results in clear, actionable prose."
 
 
 @api.get("/workspaces")
@@ -758,6 +761,15 @@ async def chat(conv_id: str, payload: ChatIn, request: Request):
         tools.append(schema)
         tool_to_ep[schema["name"]] = {"asset": asset, "endpoint": ep}
 
+    # Deduplicate tools by name (templates may create overlapping schemas)
+    seen_names = set()
+    unique_tools = []
+    for t in tools:
+        if t["name"] not in seen_names:
+            seen_names.add(t["name"])
+            unique_tools.append(t)
+    tools = unique_tools
+
     # Build context from RAG docs
     docs = await db.documents.find(
         {"workspace_id": ws["id"], "user_id": user["id"]}, {"_id": 0}
@@ -766,6 +778,98 @@ async def chat(conv_id: str, payload: ChatIn, request: Request):
     system_prompt = ws.get("system_prompt") or ""
     if rag_context:
         system_prompt = (system_prompt + "\n\n# Reference Context (retrieved from attached documents)\n" + rag_context).strip()
+
+    # Add tool-use instructions, guardrails, and vendor SOPs
+    if tools:
+        # Group tools by vendor for SOP generation
+        vendor_tools = {}
+        for t in tools:
+            vendor = t.get("description", "").split("]")[0].replace("[", "").strip() or "General"
+            vendor_tools.setdefault(vendor, []).append(t["name"])
+
+        tool_names = ", ".join(t["name"] for t in tools)
+
+        # Build vendor-specific SOPs
+        vendor_sops = []
+        sop_map = {
+            "ServiceNow": (
+                "## ServiceNow CMDB SOPs\n"
+                "• Always use sysparm_limit to avoid fetching excessive records (default: 200, use lower for quick checks).\n"
+                "• When analysing operational status, cross-reference multiple CI types (servers + services + applications) for a complete picture.\n"
+                "• For comprehensive reports, call multiple endpoints in parallel (e.g. list_servers + list_db_instances + list_app_servers).\n"
+                "• Present CMDB data in structured tables with key fields: Name, IP, OS, Status, Last Updated.\n"
+                "• Flag any CIs with non-operational status as potential issues requiring attention."
+            ),
+            "Commvault": (
+                "## Commvault SOPs\n"
+                "• For RCA: first list_jobs (status=failed, last 24h) → then get_job for details → then get_events for error logs.\n"
+                "• Always include completedJobLookupTime=86400 when listing jobs.\n"
+                "• Cross-reference failed jobs with client properties and storage policies.\n"
+                "• Check triggered alerts alongside job failures for correlated incidents."
+            ),
+            "Rubrik": (
+                "## Rubrik SOPs\n"
+                "• Start with backup_jobs to assess overall health, then drill into anomaly_events for security.\n"
+                "• Check threat_hunts for ransomware indicators.\n"
+                "• Cross-reference protected_objects with cluster_info for coverage gaps.\n"
+                "• Report SLA compliance status prominently."
+            ),
+            "NetApp": (
+                "## NetApp ONTAP SOPs\n"
+                "• Check cluster_info first for overall health.\n"
+                "• When analysing storage, correlate volumes → aggregates → SVMs.\n"
+                "• Monitor snapshot counts and space usage for capacity planning."
+            ),
+            "Dell PowerMax": (
+                "## Dell PowerMax SOPs\n"
+                "• Start with system_version and list_arrays for inventory.\n"
+                "• Analyse storage groups for capacity and performance.\n"
+                "• Report array performance metrics (IOPS, latency) with thresholds."
+            ),
+            "Veeam": (
+                "## Veeam SOPs\n"
+                "• Check recent backup sessions first for failures.\n"
+                "• Cross-reference protected VMs with backup repositories.\n"
+                "• Report RPO/RTO compliance status."
+            ),
+            "Pure Storage": (
+                "## Pure Storage SOPs\n"
+                "• Monitor array performance and volume space usage.\n"
+                "• Check host connections for any disconnected hosts.\n"
+                "• Report data reduction ratios and capacity trends."
+            ),
+        }
+        for vendor in vendor_tools:
+            if vendor in sop_map:
+                vendor_sops.append(sop_map[vendor])
+
+        system_prompt += (
+            "\n\n# Agent Operating Guidelines\n"
+            "\n## Tool Execution Rules\n"
+            "• You MUST call tools to answer questions — never describe what you would call.\n"
+            "• Call MULTIPLE tools in a single turn when the query requires cross-referencing data.\n"
+            "  For example: 'Show me infrastructure health' → call list_servers + list_app_servers + list_db_instances together.\n"
+            "• After receiving tool results, synthesise a CONSOLIDATED response combining all data.\n"
+            "• Present data in structured markdown: tables, bullet lists, and status indicators.\n"
+            "• If a tool returns an error, report it clearly but continue with other tool results.\n"
+            f"\nAvailable tools: {tool_names}\n"
+            "\n## Security Guardrails\n"
+            "• NEVER expose raw credentials, tokens, API keys, or auth headers in responses.\n"
+            "• NEVER return sys_id or internal database identifiers unless specifically asked.\n"
+            "• Sanitise any PII (emails, phone numbers) from tool responses before presenting to users.\n"
+            "• If a tool response contains error messages with stack traces or internal paths, summarise the error without exposing internals.\n"
+            "• Do NOT execute destructive operations (DELETE, POST to action endpoints) without explicit user confirmation.\n"
+            "• For write operations, always confirm: what will be changed, on which asset, and ask for approval.\n"
+            "\n## Response Quality Standards\n"
+            "• Start with a brief summary/status line before detailed data.\n"
+            "• Use severity indicators: 🔴 Critical, 🟡 Warning, 🟢 Healthy for operational status.\n"
+            "• Include counts and statistics (e.g. '47 servers found, 3 non-operational').\n"
+            "• Group related items logically (by status, by type, by severity).\n"
+            "• End with actionable recommendations when issues are found.\n"
+        )
+
+        if vendor_sops:
+            system_prompt += "\n# Standard Operating Procedures\n" + "\n\n".join(vendor_sops) + "\n"
 
     # Load recent message history (last 20)
     history = await db.messages.find(

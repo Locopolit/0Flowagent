@@ -25,21 +25,20 @@ async def run_chat(
     """
     llm = _decrypt_llm(llm_config)
     provider = llm.get("provider")
-    if provider in ("openai", "local"):
-        return await _run_openai_compat(llm, system_prompt, messages, tools, tool_executor, max_iters)
     if provider == "anthropic":
         return await _run_anthropic(llm, system_prompt, messages, tools, tool_executor, max_iters)
     if provider == "gemini":
         return await _run_gemini(llm, system_prompt, messages, tools, tool_executor, max_iters)
-    raise ValueError(f"Unsupported provider: {provider}")
+    # Everything else (openai, local, groq, deepseek, azure, together, mistral, ollama, vllm, lmstudio, custom, …)
+    return await _run_openai_compat(llm, system_prompt, messages, tools, tool_executor, max_iters)
 
 
 # ---------------- OpenAI / OpenAI-compatible (incl. local like Ollama) ----------------
 async def _run_openai_compat(llm, system_prompt, messages, tools, tool_executor, max_iters):
     from openai import AsyncOpenAI
     base_url = llm.get("base_url") or None
-    # Ensure local/Ollama URLs end with /v1 for OpenAI SDK
-    if llm.get("provider") == "local" and base_url and not base_url.rstrip("/").endswith("/v1"):
+    # Ensure any custom base URL ends with /v1 for OpenAI SDK compatibility
+    if base_url and not base_url.rstrip("/").endswith("/v1"):
         base_url = base_url.rstrip("/") + "/v1"
     api_key = llm.get("api_key") or "sk-none"  # local ollama doesn't need key
     client = AsyncOpenAI(api_key=api_key, base_url=base_url)

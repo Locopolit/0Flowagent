@@ -115,27 +115,27 @@ export default function FlowsList() {
           <div className="relative flex-1 min-w-[240px] max-w-md">
             <MagnifyingGlass
               size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none"
             />
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search flows…"
-              className="pl-9 bg-neutral-900"
+              placeholder="Search flows..."
+              className="pl-9 bg-white/[0.04] border-white/[0.08] rounded-xl"
               data-testid="flows-search"
             />
           </div>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="h-9 rounded-sm border border-input bg-neutral-900 px-3 text-sm font-mono"
+            className="h-9 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white/60"
             data-testid="flows-sort"
           >
             <option value="updated">Recent</option>
-            <option value="name">Name (A→Z)</option>
+            <option value="name">Name (A-Z)</option>
           </select>
-          <span className="ml-auto font-mono text-[11px] text-muted-foreground tabular-nums">
-            {visibleFlows.length} / {flows.length}
+          <span className="ml-auto text-[11px] text-white/25 font-medium tabular-nums">
+            {visibleFlows.length} of {flows.length}
           </span>
         </div>
       )}
@@ -157,8 +157,8 @@ export default function FlowsList() {
           testid="flows-empty"
         />
       ) : visibleFlows.length === 0 ? (
-        <div className="py-12 text-center font-mono text-sm text-muted-foreground">
-          No flows match "{query}".
+        <div className="py-12 text-center text-[13px] text-white/30">
+          No flows match &ldquo;{query}&rdquo;.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -172,19 +172,27 @@ export default function FlowsList() {
             return (
               <div
                 key={flow.id}
-                className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-6 flex flex-col gap-4 group hover:border-white/[0.12] transition-colors"
+                className="group rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 flex flex-col gap-4 hover:bg-white/[0.06] hover:border-white/[0.1] transition-all"
                 data-testid={`flow-card-${flow.id}`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-lg truncate">{flow.name}</h3>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                      {flow.description || "No description"}
-                    </p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-[12px] bg-gradient-to-br from-amber-500 to-orange-400 flex items-center justify-center shadow-lg shadow-amber-500/20 shrink-0">
+                      <TreeStructure size={18} weight="fill" className="text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-[14px] text-white/90 truncate">{flow.name}</h3>
+                      <p className="text-[11px] text-white/30 mt-0.5 line-clamp-1">
+                        {flow.description || "No description"}
+                      </p>
+                    </div>
                   </div>
-                  <div className="p-2 bg-neutral-900 border border-border text-primary rounded-sm shrink-0">
-                    <TreeStructure size={18} weight="duotone" />
-                  </div>
+                  <button
+                    className="text-white/15 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                    onClick={() => deleteFlow(flow.id)}
+                  >
+                    <Trash size={14} />
+                  </button>
                 </div>
 
                 {triggers.length > 0 && (
@@ -194,29 +202,29 @@ export default function FlowsList() {
                       return (
                         <span
                           key={n.id}
-                          className="inline-flex items-center gap-1.5 px-2 py-0.5 node-pill-trigger text-[10px] uppercase font-mono rounded-full"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[9px] uppercase font-semibold tracking-wider rounded-lg bg-emerald-500/8 text-emerald-400/70 border border-emerald-500/10"
                         >
-                          <Icon size={10} /> {n.subtype}
+                          <Icon size={10} weight="fill" /> {n.subtype}
                         </span>
                       );
                     })}
                   </div>
                 )}
 
-                <div className="flex-1 flex items-center gap-3 text-[11px] font-mono text-muted-foreground tabular-nums">
+                <div className="flex-1 flex items-center gap-2 text-[11px] text-white/25 font-medium">
                   <span>{nodes.length} nodes</span>
-                  <span className="text-border">·</span>
+                  <span className="text-white/10">·</span>
                   <span className="inline-flex items-center gap-1">
                     {actions.map((n) => {
                       const Icon = ACTION_ICONS[n.subtype];
-                      return Icon ? <Icon key={n.id} size={11} /> : null;
+                      return Icon ? <Icon key={n.id} size={11} className="text-white/25" /> : null;
                     })}
                     {logic.map((n) => (
-                      <GitBranch key={n.id} size={11} />
+                      <GitBranch key={n.id} size={11} className="text-white/25" />
                     ))}
                   </span>
                   {updated && (
-                    <span className="ml-auto">updated {relativeTime(updated)}</span>
+                    <span className="ml-auto text-white/20">{relativeTime(updated)}</span>
                   )}
                 </div>
 
@@ -224,26 +232,18 @@ export default function FlowsList() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 gap-2 rounded-sm"
+                    className="flex-1 gap-2 rounded-xl border-white/[0.08] hover:bg-white/[0.06] text-white/60 text-[12px]"
                     disabled={runningId === flow.id}
                     onClick={() => executeFlow(flow.id)}
                   >
-                    <Play size={14} weight="fill" />{" "}
-                    {runningId === flow.id ? "Running…" : "Run"}
+                    <Play size={13} weight="fill" />{" "}
+                    {runningId === flow.id ? "Running..." : "Run"}
                   </Button>
                   <Link to={`/flows/${flow.id}`} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full rounded-sm">
+                    <Button variant="outline" size="sm" className="w-full rounded-xl border-white/[0.08] hover:bg-white/[0.06] text-white/60 text-[12px]">
                       Edit
                     </Button>
                   </Link>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-red-500"
-                    onClick={() => deleteFlow(flow.id)}
-                  >
-                    <Trash size={14} />
-                  </Button>
                 </div>
               </div>
             );

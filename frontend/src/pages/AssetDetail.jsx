@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, PlayCircle, Trash, CheckCircle, WarningCircle } from "@phosphor-icons/react";
+import { ArrowLeft, Plus, PlayCircle, Trash, CheckCircle, WarningCircle, PencilSimple, FloppyDisk, CaretDown, CaretRight } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 const emptyEp = { name: "", description: "", method: "GET", path: "/", query_params: [] };
@@ -21,14 +21,44 @@ export default function AssetDetail() {
   const [testState, setTestState] = useState(null);
   const [running, setRunning] = useState(null); // endpoint-id being tested
   const [runResult, setRunResult] = useState({});
+  const [credOpen, setCredOpen] = useState(false);
+  const [credForm, setCredForm] = useState({ base_url: "", username: "", password: "" });
+  const [credSaving, setCredSaving] = useState(false);
 
   const load = async () => {
     const [a, e] = await Promise.all([
       api.get(`/assets/${id}`), api.get(`/assets/${id}/endpoints`),
     ]);
     setAsset(a.data); setEndpoints(e.data);
+    setCredForm({
+      base_url: a.data.base_url || "",
+      username: a.data.auth_config?.username || "",
+      password: "",
+      api_key: "",
+    });
   };
   useEffect(() => { load(); }, [id]);
+
+  const saveCreds = async () => {
+    setCredSaving(true);
+    try {
+      const authConfig = { username: credForm.username };
+      if (credForm.password) authConfig.password = credForm.password;
+      if (credForm.api_key) authConfig.api_key = credForm.api_key;
+      await api.put(`/assets/${id}`, {
+        name: asset.name,
+        vendor: asset.vendor || "",
+        description: asset.description || "",
+        base_url: credForm.base_url,
+        auth_type: asset.auth_type || "basic",
+        auth_config: authConfig,
+      });
+      toast.success("Credentials updated");
+      setCredOpen(false);
+      load();
+    } catch (e) { toast.error(formatApiError(e)); }
+    finally { setCredSaving(false); }
+  };
 
   const testConn = async () => {
     setTestState({ loading: true });
@@ -88,6 +118,87 @@ export default function AssetDetail() {
           {!testState.loading && <div className="mt-2 text-xs opacity-80">{testState.detail}</div>}
         </div>
       )}
+
+      {/* ── Edit Credentials ── */}
+      <div className="mb-8 border border-white/[0.06] rounded-2xl bg-white/[0.03] overflow-hidden">
+        <button
+          onClick={() => setCredOpen(!credOpen)}
+          className="w-full flex items-center justify-between p-5 text-left hover:bg-white/[0.02] transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <PencilSimple size={16} className="text-white/60" />
+            <div>
+              <div className="text-sm font-medium">Credentials & Connection</div>
+              <div className="text-xs text-white/40 mt-0.5">Base URL, username, password{asset.auth_type === "api_key" ? ", API key" : ""}</div>
+            </div>
+          </div>
+          {credOpen ? <CaretDown size={14} className="text-white/40" /> : <CaretRight size={14} className="text-white/40" />}
+        </button>
+        {credOpen && (
+          <div className="border-t border-white/[0.06] p-5">
+            <div className="grid grid-cols-2 gap-4 max-w-2xl">
+              <div className="col-span-2">
+                <Label className="text-[12px] font-medium text-white/60">base url</Label>
+                <Input
+                  value={credForm.base_url}
+                  onChange={(e) => setCredForm({ ...credForm, base_url: e.target.value })}
+                  className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm"
+                  data-testid="cred-base-url"
+                />
+              </div>
+              {(asset.auth_type === "token" || asset.auth_type === "basic") && (
+                <>
+                  <div>
+                    <Label className="text-[12px] font-medium text-white/60">username</Label>
+                    <Input
+                      value={credForm.username}
+                      onChange={(e) => setCredForm({ ...credForm, username: e.target.value })}
+                      className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5"
+                      data-testid="cred-username"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[12px] font-medium text-white/60">password</Label>
+                    <Input
+                      type="password"
+                      value={credForm.password}
+                      placeholder="••••••••  (leave blank to keep current)"
+                      onChange={(e) => setCredForm({ ...credForm, password: e.target.value })}
+                      className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5"
+                      data-testid="cred-password"
+                    />
+                  </div>
+                </>
+              )}
+              {asset.auth_type === "api_key" && (
+                <div className="col-span-2">
+                  <Label className="text-[12px] font-medium text-white/60">api key</Label>
+                  <Input
+                    type="password"
+                    value={credForm.api_key}
+                    placeholder="••••••••  (leave blank to keep current)"
+                    onChange={(e) => setCredForm({ ...credForm, api_key: e.target.value })}
+                    className="bg-white/[0.04] border-white/[0.08] rounded-lg mt-1.5 font-mono text-sm"
+                    data-testid="cred-api-key"
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-3 mt-5">
+              <Button
+                size="sm"
+                className="rounded-xl gap-2"
+                onClick={saveCreds}
+                disabled={credSaving || !credForm.base_url}
+                data-testid="save-credentials"
+              >
+                {credSaving ? "[ saving... ]" : <><FloppyDisk size={14} /> Save credentials</>}
+              </Button>
+              <span className="text-xs text-white/30">Leave password blank to keep the existing one.</span>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="flex items-end justify-between mb-4">
         <div>

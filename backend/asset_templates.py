@@ -245,6 +245,120 @@ TEMPLATES: List[Dict] = [
              "description": "Get array-level performance (IOPS, latency, bandwidth)."},
         ],
     },
+    {
+        "id": "servicenow_cmdb",
+        "vendor": "ServiceNow",
+        "name": "ServiceNow CMDB Analyser",
+        "tagline": "Intelligent CMDB discovery, analysis and reporting.",
+        "description": "ServiceNow Table API for CMDB Configuration Items. Uses HTTP basic auth. Query CI tables for application servers, services, databases, servers, VMs, clusters, and more.",
+        "auth_type": "basic",
+        "auth_hint": "Use your ServiceNow instance credentials (username + password).",
+        "auth_defaults": {},
+        "base_url_example": "https://your-instance.service-now.com",
+        "color": "#81B5A1",
+        "endpoints": [
+            # ── Application Servers ──
+            {"name": "list_app_servers", "method": "GET",
+             "path": "/api/now/table/cmdb_ci_app_server",
+             "description": "List all application server CIs from the CMDB including name, IP, OS, operational status, and FQDN.",
+             "query_params": [
+                 {"name": "sysparm_limit", "description": "Maximum number of records to return (default 200).", "required": False},
+                 {"name": "sysparm_fields", "description": "Comma-separated list of fields to return.", "required": False},
+                 {"name": "sysparm_display_value", "description": "Return display values (true/false/all).", "required": False},
+                 {"name": "sysparm_query", "description": "Encoded query string to filter results.", "required": False},
+             ]},
+            # ── Business Services ──
+            {"name": "list_business_services", "method": "GET",
+             "path": "/api/now/table/cmdb_ci_service",
+             "description": "List all business service CIs from the CMDB. Useful for understanding service dependencies and operational status.",
+             "query_params": [
+                 {"name": "sysparm_limit", "description": "Maximum number of records to return.", "required": False},
+                 {"name": "sysparm_fields", "description": "Comma-separated list of fields to return.", "required": False},
+                 {"name": "sysparm_display_value", "description": "Return display values (true/false/all).", "required": False},
+                 {"name": "sysparm_query", "description": "Encoded query string to filter results.", "required": False},
+             ]},
+            # ── Application Services ──
+            {"name": "list_application_services", "method": "GET",
+             "path": "/api/now/table/cmdb_ci_service_auto",
+             "description": "List all application service (auto-discovered) CIs from the CMDB.",
+             "query_params": [
+                 {"name": "sysparm_limit", "description": "Maximum number of records to return.", "required": False},
+                 {"name": "sysparm_fields", "description": "Comma-separated list of fields to return.", "required": False},
+                 {"name": "sysparm_display_value", "description": "Return display values (true/false/all).", "required": False},
+                 {"name": "sysparm_query", "description": "Encoded query string to filter results.", "required": False},
+             ]},
+            # ── Applications ──
+            {"name": "list_applications", "method": "GET",
+             "path": "/api/now/table/cmdb_ci_appl",
+             "description": "List all application CIs from the CMDB. Returns installed applications, their versions, and hosting details.",
+             "query_params": [
+                 {"name": "sysparm_limit", "description": "Maximum number of records to return.", "required": False},
+                 {"name": "sysparm_fields", "description": "Comma-separated list of fields to return.", "required": False},
+                 {"name": "sysparm_display_value", "description": "Return display values (true/false/all).", "required": False},
+                 {"name": "sysparm_query", "description": "Encoded query string to filter results.", "required": False},
+             ]},
+            # ── Database Instances ──
+            {"name": "list_db_instances", "method": "GET",
+             "path": "/api/now/table/cmdb_ci_db_instance",
+             "description": "List all database instance CIs from the CMDB including DB type, version, and operational status.",
+             "query_params": [
+                 {"name": "sysparm_limit", "description": "Maximum number of records to return.", "required": False},
+                 {"name": "sysparm_fields", "description": "Comma-separated list of fields to return.", "required": False},
+                 {"name": "sysparm_display_value", "description": "Return display values (true/false/all).", "required": False},
+                 {"name": "sysparm_query", "description": "Encoded query string to filter results.", "required": False},
+             ]},
+            # ── Servers ──
+            {"name": "list_servers", "method": "GET",
+             "path": "/api/now/table/cmdb_ci_server",
+             "description": "List all server CIs from the CMDB. Returns physical and virtual servers with hardware and OS details.",
+             "query_params": [
+                 {"name": "sysparm_limit", "description": "Maximum number of records to return.", "required": False},
+                 {"name": "sysparm_fields", "description": "Comma-separated list of fields to return.", "required": False},
+                 {"name": "sysparm_display_value", "description": "Return display values (true/false/all).", "required": False},
+                 {"name": "sysparm_query", "description": "Encoded query string to filter results.", "required": False},
+             ]},
+            # ── Computers ──
+            {"name": "list_computers", "method": "GET",
+             "path": "/api/now/table/cmdb_ci_computer",
+             "description": "List all computer CIs from the CMDB including desktops, laptops, and workstations.",
+             "query_params": [
+                 {"name": "sysparm_limit", "description": "Maximum number of records to return.", "required": False},
+                 {"name": "sysparm_fields", "description": "Comma-separated list of fields to return.", "required": False},
+                 {"name": "sysparm_display_value", "description": "Return display values (true/false/all).", "required": False},
+                 {"name": "sysparm_query", "description": "Encoded query string to filter results.", "required": False},
+             ]},
+            # ── VM Instances ──
+            {"name": "list_vm_instances", "method": "GET",
+             "path": "/api/now/table/cmdb_ci_vm_instance",
+             "description": "List all virtual machine instance CIs from the CMDB including hypervisor, state, and resource allocation.",
+             "query_params": [
+                 {"name": "sysparm_limit", "description": "Maximum number of records to return.", "required": False},
+                 {"name": "sysparm_fields", "description": "Comma-separated list of fields to return.", "required": False},
+                 {"name": "sysparm_display_value", "description": "Return display values (true/false/all).", "required": False},
+                 {"name": "sysparm_query", "description": "Encoded query string to filter results.", "required": False},
+             ]},
+            # ── Web Servers ──
+            {"name": "list_web_servers", "method": "GET",
+             "path": "/api/now/table/cmdb_ci_web_server",
+             "description": "List all web server CIs from the CMDB (Apache, IIS, Nginx, etc.) with version and status.",
+             "query_params": [
+                 {"name": "sysparm_limit", "description": "Maximum number of records to return.", "required": False},
+                 {"name": "sysparm_fields", "description": "Comma-separated list of fields to return.", "required": False},
+                 {"name": "sysparm_display_value", "description": "Return display values (true/false/all).", "required": False},
+                 {"name": "sysparm_query", "description": "Encoded query string to filter results.", "required": False},
+             ]},
+            # ── Clusters ──
+            {"name": "list_clusters", "method": "GET",
+             "path": "/api/now/table/cmdb_ci_cluster",
+             "description": "List all cluster CIs from the CMDB including cluster type, nodes, and operational status.",
+             "query_params": [
+                 {"name": "sysparm_limit", "description": "Maximum number of records to return.", "required": False},
+                 {"name": "sysparm_fields", "description": "Comma-separated list of fields to return.", "required": False},
+                 {"name": "sysparm_display_value", "description": "Return display values (true/false/all).", "required": False},
+                 {"name": "sysparm_query", "description": "Encoded query string to filter results.", "required": False},
+             ]},
+        ],
+    },
 ]
 
 

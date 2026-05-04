@@ -102,8 +102,11 @@ async def _acquire_token(asset: Dict, client: httpx.AsyncClient) -> Optional[str
     return token
 
 
-async def test_asset_connection(asset: Dict) -> Dict:
-    """Attempt auth or a simple base_url GET. Returns {ok, detail}."""
+async def test_asset_connection(asset: Dict, endpoints: list | None = None) -> Dict:
+    """Attempt auth or a simple base_url GET. Returns {ok, detail}.
+    If a bare base_url GET returns 401/403, retry with the first endpoint path
+    (some APIs like ServiceNow reject unauthenticated root requests).
+    """
     asset = _decrypt_asset(asset)
     async with httpx.AsyncClient(verify=False) as client:
         auth_type = asset.get("auth_type", "none")
@@ -113,8 +116,20 @@ async def test_asset_connection(asset: Dict) -> Dict:
                 return {"ok": True, "detail": f"Token acquired ({token[:12]}...)"}
             # basic / api_key / none: do a simple GET to base_url
             headers, basic = _build_auth_headers_and_auth(asset)
-            resp = await client.get(asset["base_url"], headers=headers, auth=basic, timeout=20)
-            return {"ok": True, "detail": f"HTTP {resp.status_code}"}
+            base_url = asset["base_url"].rstrip("/")
+            resp = await client.get(base_url, headers=headers, auth=basic, timeout=20)
+            if resp.status_code in (401, 403) and endpoints:
+                # Retry with the first endpoint path — some APIs need a real path
+                first_path = (endpoints[0].get("path") or "").lstrip("/")
+                if first_path:
+                    url = base_url + "/" + first_path
+                    # Add query params to limit the response size
+                    params = {"sysparm_limit": "1"} if "sysparm" in first_path or "service-now" in base_url.lower() or "servicenow" in base_url.lower() else {}
+                    resp = await client.get(url, headers=headers, auth=basic, timeout=20, params=params or None)
+            if 200 <= resp.status_code < 400:
+                return {"ok": True, "detail": f"HTTP {resp.status_code}"}
+            else:
+                return {"ok": False, "detail": f"HTTP {resp.status_code}"}
         except Exception as e:
             return {"ok": False, "detail": str(e)}
 
